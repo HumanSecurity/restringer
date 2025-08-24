@@ -11,10 +11,10 @@ function normalizeEmptyStatements(arb, candidateFilter = () => true) {
 	for (let i = 0; i < relevantNodes.length; i++) {
 		const n = relevantNodes[i];
 		if (candidateFilter(n)) {
-			// A for loop is sometimes used to assign variables without providing a loop body, just an empty statement.
+			// A loop can be used to execute code even without providing a loop body, just an empty statement.
 			// If we delete that empty statement the syntax breaks
 			// e.g. for (var i = 0, b = 8;;); - this is a valid for statement.
-			if (!/For.*Statement/.test(n.parentNode.type)) arb.markNode(n);
+			if (!/(For.*|(Do)?While)Statement/.test(n.parentNode.type)) arb.markNode(n);
 		}
 	}
 	return arb;
