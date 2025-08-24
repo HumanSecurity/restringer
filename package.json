@@ -19,7 +19,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "flast": "2.2.1",
+    "flast": "2.2.5",
     "isolated-vm": "^5.0.3",
     "obfuscation-detector": "^2.0.5"
   },
