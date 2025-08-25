@@ -1,5 +1,8 @@
 import {badIdentifierCharsRegex, validIdentifierBeginning} from '../config.js';
 
+// Node types that use 'key' property instead of 'property' for computed access
+const relevantTypes = ['MethodDefinition', 'Property'];
+
 /**
  * Find all computed member expressions, method definitions, and properties that can be converted to dot notation.
  * @param {Arborist} arb An Arborist instance
@@ -13,7 +16,6 @@ export function normalizeComputedMatch(arb, candidateFilter = () => true) {
 		.concat(arb.ast[0].typeMap.Property);
 
 	const matchingNodes = [];
-	const relevantTypes = ['MethodDefinition', 'Property'];
 	
 	for (let i = 0; i < relevantNodes.length; i++) {
 		const n = relevantNodes[i];

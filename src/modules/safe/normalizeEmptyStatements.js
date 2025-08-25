@@ -1,3 +1,6 @@
+// Control flow statement types where empty statements must be preserved as statement bodies
+const controlFlowStatementTypes = ['ForStatement', 'ForInStatement', 'ForOfStatement', 'WhileStatement', 'DoWhileStatement', 'IfStatement'];
+
 /**
  * Find all empty statements that can be safely removed.
  * @param {Arborist} arb
@@ -9,8 +12,6 @@ export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true)
 		.concat(arb.ast[0].typeMap.EmptyStatement);
 		
 	const matchingNodes = [];
-	// Control flow statement types where empty statements must be preserved as statement bodies
-	const controlFlowStatementTypes = new Set(['ForStatement', 'ForInStatement', 'ForOfStatement', 'WhileStatement', 'DoWhileStatement', 'IfStatement']);
 	
 	for (let i = 0; i < relevantNodes.length; i++) {
 		const n = relevantNodes[i];
@@ -19,7 +20,7 @@ export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true)
 			// If we delete that empty statement the syntax breaks
 			// e.g. for (var i = 0, b = 8;;); - valid for statement
 			// e.g. if (condition); - valid if statement with empty consequent
-			if (!controlFlowStatementTypes.has(n.parentNode.type)) {
+			if (!controlFlowStatementTypes.includes(n.parentNode.type)) {
 				matchingNodes.push(n);
 			}
 		}
