@@ -238,7 +238,7 @@ describe('SAFE: rearrangeSequences', async () => {
 });
 describe('SAFE: rearrangeSwitches', async () => {
 	const targetModule = (await import('../src/modules/safe/rearrangeSwitches.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Complex switch with multiple cases and return statement', () => {
 		const code = `(() => {let a = 1;\twhile (true) {switch (a) {case 3: return console.log(3); case 2: console.log(2); a = 3; break;
 case 1: console.log(1); a = 2; break;}}})();`;
 		const expected = `((() => {
@@ -253,6 +253,62 @@ case 1: console.log(1); a = 2; break;}}})();`;
     }
   }
 })());`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Simple switch with sequential cases', () => {
+		const code = `var state = 0; switch (state) { case 0: first(); state = 1; break; case 1: second(); break; }`;
+		const expected = `var state = 0;
+{
+  first();
+  state = 1;
+  second();
+}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Switch with default case', () => {
+		const code = `var x = 1; switch (x) { case 1: action1(); x = 2; break; default: defaultAction(); break; case 2: action2(); break; }`;
+		const expected = `var x = 1;
+{
+  action1();
+  x = 2;
+  defaultAction();
+}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Switch starting with non-initial case via default', () => {
+		const code = `var val = 99; switch (val) { case 1: step1(); val = 2; break; case 2: step2(); break; default: val = 1; break; }`;
+		const expected = `var val = 99;
+{
+  val = 1;
+  step1();
+  val = 2;
+  step2();
+}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not transform switch without literal discriminant initialization', () => {
+		const code = `var a; switch (a) { case 1: doSomething(); break; }`;
+		const expected = `var a; switch (a) { case 1: doSomething(); break; }`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Transform switch but stop at multiple assignments to discriminant', () => {
+		const code = `var state = 0; switch (state) { case 0: state = 1; state = 2; break; case 1: action(); break; }`;
+		const expected = `var state = 0;
+{
+  state = 1;
+  state = 2;
+}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not transform switch with non-literal case value', () => {
+		const code = `var x = 0; switch (x) { case variable: doSomething(); break; }`;
+		const expected = `var x = 0; switch (x) { case variable: doSomething(); break; }`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
