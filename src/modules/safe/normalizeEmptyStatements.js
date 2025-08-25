@@ -31,9 +31,11 @@ export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true)
  * Remove an empty statement node.
  * @param {Arborist} arb
  * @param {Object} node The empty statement node to remove
+ * @return {Arborist}
  */
 export function normalizeEmptyStatementsTransform(arb, node) {
 	arb.markNode(node);
+	return arb;
 }
 
 /**
@@ -60,7 +62,7 @@ export default function normalizeEmptyStatements(arb, candidateFilter = () => tr
 	const matchingNodes = normalizeEmptyStatementsMatch(arb, candidateFilter);
 	
 	for (let i = 0; i < matchingNodes.length; i++) {
-		normalizeEmptyStatementsTransform(arb, matchingNodes[i]);
+		arb = normalizeEmptyStatementsTransform(arb, matchingNodes[i]);
 	}
 	
 	return arb;

@@ -25,8 +25,9 @@ export function parseTemplateLiteralsIntoStringLiteralsMatch(arb, candidateFilte
  * Convert a template literal with only literal expressions into a plain string literal.
  * @param {Arborist} arb
  * @param {Object} node The template literal node to transform
+ * @return {Arborist}
  */
-function parseTemplateLiteralsIntoStringLiteralsTransform(arb, node) {
+export function parseTemplateLiteralsIntoStringLiteralsTransform(arb, node) {
 	// Template literals have alternating quasis (string parts) and expressions
 	// e.g. `hello ${name}!` has quasis=["hello ", "!"] and expressions=[name]
 	// The build process is: quasi[0] + expr[0] + quasi[1] + expr[1] + ... + final_quasi
@@ -41,6 +42,7 @@ function parseTemplateLiteralsIntoStringLiteralsTransform(arb, node) {
 	newStringLiteral += node.quasis.slice(-1)[0].value.raw;
 	
 	arb.markNode(node, createNewNode(newStringLiteral));
+	return arb;
 }
 
 /**
@@ -63,7 +65,7 @@ export default function parseTemplateLiteralsIntoStringLiterals(arb, candidateFi
 	const matchingNodes = parseTemplateLiteralsIntoStringLiteralsMatch(arb, candidateFilter);
 	
 	for (let i = 0; i < matchingNodes.length; i++) {
-		parseTemplateLiteralsIntoStringLiteralsTransform(arb, matchingNodes[i]);
+		arb = parseTemplateLiteralsIntoStringLiteralsTransform(arb, matchingNodes[i]);
 	}
 	
 	return arb;

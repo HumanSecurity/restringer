@@ -50,6 +50,7 @@ export function normalizeComputedMatch(arb, candidateFilter = () => true) {
  * Transform a computed property access node to use dot notation.
  * @param {Arborist} arb
  * @param {Object} n The AST node to transform
+ * @return {Arborist}
  */
 export function normalizeComputedTransform(arb, n) {
 	const relevantProperty = n.type === 'MemberExpression' ? 'property' : 'key';
@@ -61,6 +62,7 @@ export function normalizeComputedTransform(arb, n) {
 			name: n[relevantProperty].value,
 		},
 	});
+	return arb;
 }
 
 /**
@@ -83,7 +85,7 @@ export default function normalizeComputed(arb, candidateFilter = () => true) {
 	const matchingNodes = normalizeComputedMatch(arb, candidateFilter);
 	
 	for (let i = 0; i < matchingNodes.length; i++) {
-		normalizeComputedTransform(arb, matchingNodes[i]);
+		arb = normalizeComputedTransform(arb, matchingNodes[i]);
 	}
 	return arb;
 }

@@ -4,7 +4,7 @@
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
  * @return {Array} Array of nodes with sequence expressions that can be rearranged
  */
-function rearrangeSequencesMatch(arb, candidateFilter = () => true) {
+export function rearrangeSequencesMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.ReturnStatement
 		.concat(arb.ast[0].typeMap.IfStatement);
 	const matchingNodes = [];
@@ -28,8 +28,9 @@ function rearrangeSequencesMatch(arb, candidateFilter = () => true) {
  * into separate expression statements.
  * @param {Arborist} arb
  * @param {Object} node The statement node to transform
+ * @return {Arborist}
  */
-function rearrangeSequencesTransform(arb, node) {
+export function rearrangeSequencesTransform(arb, node) {
 	const parent = node.parentNode;
 	// Get the sequence expression from either return argument or if test
 	const sequenceExpression = node.argument || node.test;
@@ -77,6 +78,7 @@ function rearrangeSequencesTransform(arb, node) {
 			]
 		});
 	}
+	return arb;
 }
 
 /**
@@ -102,7 +104,7 @@ export default function rearrangeSequences(arb, candidateFilter = () => true) {
 	const matchingNodes = rearrangeSequencesMatch(arb, candidateFilter);
 	
 	for (let i = 0; i < matchingNodes.length; i++) {
-		rearrangeSequencesTransform(arb, matchingNodes[i]);
+		arb = rearrangeSequencesTransform(arb, matchingNodes[i]);
 	}
 	
 	return arb;
