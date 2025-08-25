@@ -6,3 +6,4 @@ node_modules/
 *tmp*/
 .DS_Store
 *.heapsnapshot
+.cursor
