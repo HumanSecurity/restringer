@@ -53,22 +53,75 @@ describe('SAFE: removeRedundantBlockStatements', async () => {
 });
 describe('SAFE: normalizeComputed', async () => {
 	const targetModule = (await import('../src/modules/safe/normalizeComputed.js')).default;
-	it('TP-1: Only valid identifiers are normalized to non-computed properties', () => {
+	it('TP-1: Convert valid string identifiers to dot notation', () => {
 		const code = `hello['world'][0]['%32']['valid']`;
 		const expected = `hello.world[0]['%32'].valid;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Convert object properties with valid identifiers', () => {
+		const code = `const obj = {['validProp']: 1, ['invalid-prop']: 2, ['$valid']: 3};`;
+		const expected = `const obj = {\n  validProp: 1,\n  ['invalid-prop']: 2,\n  $valid: 3\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Convert class method definitions with valid identifiers', () => {
+		const code = `class Test { ['method']() {} ['123invalid']() {} ['_valid']() {} }`;
+		const expected = `class Test {\n  method() {\n  }\n  ['123invalid']() {\n  }\n  _valid() {\n  }\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not convert invalid identifiers', () => {
+		const code = `obj['123']['-invalid']['spa ce']['@special'];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, code);
+	});
+	it('TN-2: Do not convert numeric indices but convert valid string', () => {
+		const code = `arr[0][42]['string'];`;
+		const expected = `arr[0][42].string;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
 });
 describe('SAFE: normalizeEmptyStatements', async () => {
 	const targetModule = (await import('../src/modules/safe/normalizeEmptyStatements.js')).default;
-	it('TP-1: All relevant empty statement are removed', () => {
+	it('TP-1: Remove standalone empty statements', () => {
 		const code = `;;var a = 3;;`;
 		const expected = `var a = 3;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
-	it('TN-1: Empty statements are not removed from for-loops', () => {
+	it('TP-2: Remove empty statements in blocks', () => {
+		const code = `if (true) {;; var x = 1; ;;;};`;
+		const expected = `if (true) {\n  var x = 1;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Preserve empty statements in for-loops', () => {
+		const code = `;for (;;);;`;
+		const expected = `for (;;);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Preserve empty statements in while-loops', () => {
+		const code = `;while (true);;`;
+		const expected = `while (true);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Preserve empty statements in if-statements', () => {
+		const code = `;if (condition); else;;`;
+		const expected = `if (condition);\nelse ;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Preserve empty statements in do-while loops', () => {
+		const code = `;do; while(true);;`;
+		const expected = `do ;\nwhile (true);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Preserve empty statements in for-in loops', () => {
 		const code = `;for (;;);;`;
 		const expected = `for (;;);`;
 		const result = applyModuleToCode(code, targetModule);
@@ -77,9 +130,51 @@ describe('SAFE: normalizeEmptyStatements', async () => {
 });
 describe('SAFE: parseTemplateLiteralsIntoStringLiterals', async () => {
 	const targetModule = (await import('../src/modules/safe/parseTemplateLiteralsIntoStringLiterals.js')).default;
-	it('TP-1: Only valid identifiers are normalized to non-computed properties', () => {
+	it('TP-1: Convert template literal with string expression', () => {
 		const code = '`hello ${"world"}!`;';
 		const expected = `'hello world!';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Convert template literal with multiple expressions', () => {
+		const code = '`start ${42} middle ${"end"} finish`;';
+		const expected = `'start 42 middle end finish';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Convert template literal with no expressions', () => {
+		const code = '`just plain text`;';
+		const expected = `'just plain text';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Convert template literal with boolean and number expressions', () => {
+		const code = '`flag: ${true}, count: ${123.456}`;';
+		const expected = `'flag: true, count: 123.456';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Convert empty template literal', () => {
+		const code = '``;';
+		const expected = `'';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not convert template literal with variable expression', () => {
+		const code = '`hello ${name}!`;';
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not convert template literal with function call expression', () => {
+		const code = '`result: ${getValue()}`;';
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not convert template literal with mixed literal and non-literal expressions', () => {
+		const code = '`hello ${"world"} and ${name}!`;';
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
