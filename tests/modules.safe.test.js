@@ -205,6 +205,36 @@ describe('SAFE: rearrangeSequences', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-5: Split sequences with more than three expressions', () => {
+		const code = `function f() { return a(), b(), c(), d(), e(); }`;
+		const expected = `function f() {\n  a();\n  b();\n  c();\n  d();\n  return e();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Split sequences in if condition with else clause', () => {
+		const code = `if (setup(), check(), validate()) action(); else fallback();`;
+		const expected = `{\n  setup();\n  check();\n  if (validate())\n    action();\n  else\n    fallback();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not transform single expression returns', () => {
+		const code = `function f() { return a(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not transform single expression if conditions', () => {
+		const code = `if (condition()) action();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not transform non-sequence expressions', () => {
+		const code = `function f() { return func(a, b, c); if (obj.prop) x(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: rearrangeSwitches', async () => {
 	const targetModule = (await import('../src/modules/safe/rearrangeSwitches.js')).default;
