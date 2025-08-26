@@ -531,6 +531,72 @@ describe('SAFE: replaceFunctionShellsWithWrappedValueIIFE', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-2: Replace IIFE returning literal number', () => {
+		const code = `(function() { return 42; })() + 1;`;
+		const expected = `42 + 1;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace IIFE returning literal string', () => {
+		const code = `console.log((function() { return "hello"; })());`;
+		const expected = `console.log('hello');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace IIFE returning boolean literal', () => {
+		const code = `if ((function() { return true; })()) console.log("yes");`;
+		const expected = `if (true)\n  console.log('yes');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace IIFE returning identifier', () => {
+		const code = `var result = (function() { return someValue; })();`;
+		const expected = `var result = someValue;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace multiple IIFEs in expression', () => {
+		const code = `(function() { return 5; })() + (function() { return 3; })();`;
+		const expected = `5 + 3;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace IIFE with arguments', () => {
+		const code = `(function() { return 42; })(arg);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace IIFE with multiple statements', () => {
+		const code = `(function() { console.log("side effect"); return 42; })();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace IIFE with no return statement', () => {
+		const code = `(function() { console.log("void"); })();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace IIFE returning complex expression', () => {
+		const code = `(function() { return a + b; })();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace function expression not used as IIFE', () => {
+		const code = `var fn = function() { return 42; }; fn();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});	
+	it('TN-6: Do not replace function expression without a return value', () => {
+		const code = `var fn = function() { return; };`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: replaceIdentifierWithFixedAssignedValue', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceIdentifierWithFixedAssignedValue.js')).default;
