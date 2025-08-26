@@ -600,9 +600,45 @@ describe('SAFE: replaceFunctionShellsWithWrappedValueIIFE', async () => {
 });
 describe('SAFE: replaceIdentifierWithFixedAssignedValue', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceIdentifierWithFixedAssignedValue.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace references with number literal', () => {
 		const code = `const a = 3; const b = a * 2; console.log(b + a);`;
 		const expected = `const a = 3;\nconst b = 3 * 2;\nconsole.log(b + 3);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Replace references with string literal', () => {
+		const code = `const msg = "hello"; console.log(msg + " world");`;
+		const expected = `const msg = 'hello';\nconsole.log('hello' + ' world');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace references with boolean literal', () => {
+		const code = `const flag = true; if (flag) console.log("yes");`;
+		const expected = `const flag = true;\nif (true)\n  console.log('yes');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace multiple different variables', () => {
+		const code = `const x = 5; const y = "test"; console.log(x, y);`;
+		const expected = `const x = 5;\nconst y = 'test';\nconsole.log(5, 'test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace with null literal', () => {
+		const code = `const val = null; if (val === null) console.log("null");`;
+		const expected = `const val = null;\nif (null === null)\n  console.log('null');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace with let declaration', () => {
+		const code = `let count = 0; console.log(count + 1);`;
+		const expected = `let count = 0;\nconsole.log(0 + 1);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Replace with var declaration', () => {
+		const code = `var total = 100; console.log(total / 2);`;
+		const expected = `var total = 100;\nconsole.log(100 / 2);`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
@@ -614,6 +650,36 @@ describe('SAFE: replaceIdentifierWithFixedAssignedValue', async () => {
 	});
 	it('TN-2: Do no replace a value used in a for-of-loop', () => {
 		const code = `var a = 3; for (a of [1, 2]) console.log(a);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace variable with non-literal initializer', () => {
+		const code = `const result = getValue(); console.log(result);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace object property names', () => {
+		const code = `const key = "name"; const obj = { key: "value" };`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace modified variables', () => {
+		const code = `let counter = 0; counter++; console.log(counter);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not replace reassigned variables', () => {
+		const code = `let status = true; status = false; console.log(status);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not replace variable without declaration', () => {
+		const code = `console.log(undeclaredVar);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
