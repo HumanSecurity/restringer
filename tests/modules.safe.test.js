@@ -336,6 +336,48 @@ describe('SAFE: replaceCallExpressionsWithUnwrappedIdentifier', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-3: Replace call expression with function expression assigned to variable', () => {
+		const code = `const a = function() {return btoa;}; a()('data');`;
+		const expected = `const a = function () {\n  return btoa;\n};\nbtoa('data');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace call expression with arrow function using block statement', () => {
+		const code = `const a = () => {return btoa;}; a()('test');`;
+		const expected = `const a = () => {\n  return btoa;\n};\nbtoa('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace call expression returning parameterless call', () => {
+		const code = `function a() {return someFunc();} a()('arg');`;
+		const expected = `function a() {\n  return someFunc();\n}\nsomeFunc()('arg');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace function returning call expression with arguments', () => {
+		const code = `function a() {return someFunc('param');} a()('arg');`;
+		const expected = `function a() {return someFunc('param');} a()('arg');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace function with multiple statements', () => {
+		const code = `function a() {console.log('test'); return btoa;} a()('data');`;
+		const expected = `function a() {console.log('test'); return btoa;} a()('data');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace function with no return statement', () => {
+		const code = `function a() {console.log('test');} a()('data');`;
+		const expected = `function a() {console.log('test');} a()('data');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace non-function callee', () => {
+		const code = `const a = 'notAFunction'; a()('data');`;
+		const expected = `const a = 'notAFunction'; a()('data');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: replaceEvalCallsWithLiteralContent', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceEvalCallsWithLiteralContent.js')).default;
