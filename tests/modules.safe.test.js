@@ -462,6 +462,30 @@ describe('SAFE: replaceFunctionShellsWithWrappedValue', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-2: Replace function returning literal number', () => {
+		const code = `function getValue() { return 42; }\nconsole.log(getValue());`;
+		const expected = `function getValue() {\n  return 42;\n}\nconsole.log(42);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace function returning literal string', () => {
+		const code = `function getName() { return "test"; }\nalert(getName());`;
+		const expected = `function getName() {\n  return 'test';\n}\nalert('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace function returning boolean literal', () => {
+		const code = `function isTrue() { return true; }\nif (isTrue()) console.log("yes");`;
+		const expected = `function isTrue() {\n  return true;\n}\nif (true)\n  console.log('yes');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace multiple calls to same function', () => {
+		const code = `function getX() { return x; }\ngetX() + getX();`;
+		const expected = `function getX() {\n  return x;\n}\nx + x;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 	it('TN-1: Should not replace literals 1', () => {
 		const code = `function a() {\n  return 0;\n}\nconst o = { key: a }`;
 		const expected = code;
@@ -470,6 +494,30 @@ describe('SAFE: replaceFunctionShellsWithWrappedValue', async () => {
 	});
 	it('TN-2: Should not replace literals 2', () => {
 		const code = `function a() {\n  return 0;\n}\nconsole.log(a);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace function with multiple statements', () => {
+		const code = `function complex() { console.log("side effect"); return 42; }\ncomplex();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace function with no return statement', () => {
+		const code = `function noReturn() { console.log("void"); }\nnoReturn();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace function returning complex expression', () => {
+		const code = `function calc() { return a + b; }\ncalc();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not replace function used as callback', () => {
+		const code = `function getValue() { return 42; }\n[1,2,3].map(getValue);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
