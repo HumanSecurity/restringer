@@ -417,6 +417,42 @@ describe('SAFE: replaceEvalCallsWithLiteralContent', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-7: Replace eval with single expression in conditional', () => {
+		const code = `if (eval('true')) console.log('test');`;
+		const expected = `if (true)\n  console.log('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-8: Replace eval with function declaration', () => {
+		const code = `eval('function test() { return 42; }');`;
+		const expected = `(function test() {\n  return 42;\n});`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace eval with non-literal argument', () => {
+		const code = `const x = 'alert(1)'; eval(x);`;
+		const expected = `const x = 'alert(1)'; eval(x);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace non-eval function calls', () => {
+		const code = `myEval('console.log("test")');`;
+		const expected = `myEval('console.log("test")');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace eval with invalid syntax', () => {
+		const code = `eval('invalid syntax {{{');`;
+		const expected = `eval('invalid syntax {{{');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace eval with no arguments', () => {
+		const code = `eval();`;
+		const expected = `eval();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: replaceFunctionShellsWithWrappedValue', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceFunctionShellsWithWrappedValue.js')).default;
