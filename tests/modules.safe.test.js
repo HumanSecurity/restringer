@@ -447,17 +447,56 @@ describe('SAFE: replaceNewFuncCallsWithLiteralContent', async () => {
 });
 describe('SAFE: replaceBooleanExpressionsWithIf', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceBooleanExpressionsWithIf.js')).default;
-	it('TP-1: Logical AND', () => {
+	it('TP-1: Simple logical AND', () => {
+		const code = `x && y();`;
+		const expected = `if (x) {\n  y();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Simple logical OR', () => {
+		const code = `x || y();`;
+		const expected = `if (!x) {\n  y();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Chained logical AND', () => {
 		const code = `x && y && z();`;
 		const expected = `if (x && y) {\n  z();\n}`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
-	it('TP-2: Logical OR', () => {
+	it('TP-4: Chained logical OR', () => {
 		const code = `x || y || z();`;
 		const expected = `if (!(x || y)) {\n  z();\n}`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Function call in condition', () => {
+		const code = `isValid() && doAction();`;
+		const expected = `if (isValid()) {\n  doAction();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Member expression in condition', () => {
+		const code = `obj.prop && execute();`;
+		const expected = `if (obj.prop) {\n  execute();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not transform non-logical expressions', () => {
+		const code = `x + y;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, code);
+	});
+	it('TN-2: Do not transform logical expressions not in expression statements', () => {
+		const code = `var result = x && y;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, code);
+	});
+	it('TN-3: Do not transform bitwise operators', () => {
+		const code = `x & y();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, code);
 	});
 });
 describe('SAFE: replaceSequencesWithExpressions', async () => {
