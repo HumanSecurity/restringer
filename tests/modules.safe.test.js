@@ -1059,7 +1059,7 @@ describe('SAFE: resolveDeterministicIfStatements', async () => {
 });
 describe('SAFE: resolveFunctionConstructorCalls', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveFunctionConstructorCalls.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace Function.constructor with no parameters', () => {
 		const code = `const func = Function.constructor('', "console.log('hello world!');");`;
 		const expected = `const func = function () {\n  console.log('hello world!');\n};`;
 		const result = applyModuleToCode(code, targetModule);
@@ -1068,6 +1068,72 @@ describe('SAFE: resolveFunctionConstructorCalls', async () => {
 	it('TP-2: Part of a member expression', () => {
 		const code = `a = Function.constructor('return /" + this + "/')().constructor('^([^ ]+( +[^ ]+)+)+[^ ]}');`;
 		const expected = `a = function () {\n  return /" + this + "/;\n}().constructor('^([^ ]+( +[^ ]+)+)+[^ ]}');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace Function.constructor with single parameter', () => {
+		const code = `const func = Function.constructor('x', 'return x * 2;');`;
+		const expected = `const func = function (x) {\n  return x * 2;\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace Function.constructor with multiple parameters', () => {
+		const code = `const func = Function.constructor('a', 'b', 'return a + b;');`;
+		const expected = `const func = function (a, b) {\n  return a + b;\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace Function.constructor with complex body', () => {
+		const code = `const func = Function.constructor('if (true) { return 42; } else { return 0; }');`;
+		const expected = `const func = function () {\n  if (true) {\n    return 42;\n  } else {\n    return 0;\n  }\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace Function.constructor with empty body', () => {
+		const code = `const func = Function.constructor('');`;
+		const expected = `const func = function () {\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Replace Function.constructor in variable assignment', () => {
+		const code = `var myFunc = Function.constructor('n', 'return n > 0;');`;
+		const expected = `var myFunc = function (n) {\n  return n > 0;\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-8: Replace Function.constructor in call expression', () => {
+		const code = `console.log(Function.constructor('return "test"')());`;
+		const expected = `console.log((function () {\n  return 'test';\n}()));`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace Function.constructor with non-literal arguments', () => {
+		const code = `const func = Function.constructor(param, 'return value;');`;
+		const expected = `const func = Function.constructor(param, 'return value;');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace Function.constructor with no arguments', () => {
+		const code = `const func = Function.constructor();`;
+		const expected = `const func = Function.constructor();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace non-constructor calls', () => {
+		const code = `const func = Function.prototype('test');`;
+		const expected = `const func = Function.prototype('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace Function.constructor with invalid syntax body', () => {
+		const code = `const func = Function.constructor('invalid syntax {{{');`;
+		const expected = `const func = Function.constructor('invalid syntax {{{');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-9: Replace any constructor call with literal arguments', () => {
+		const code = `const result = obj.constructor('test');`;
+		const expected = `const result = function () {\n  test;\n};`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
