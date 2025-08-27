@@ -972,9 +972,87 @@ describe('SAFE: replaceSequencesWithExpressions', async () => {
 });
 describe('SAFE: resolveDeterministicIfStatements', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveDeterministicIfStatements.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Resolve true and false literals', () => {
 		const code = `if (true) do_a(); else do_b(); if (false) do_c(); else do_d();`;
 		const expected = `do_a();\ndo_d();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Resolve truthy number literal', () => {
+		const code = `if (1) console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('truthy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Resolve falsy number literal (0)', () => {
+		const code = `if (0) console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('falsy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Resolve truthy string literal', () => {
+		const code = `if ('hello') console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('truthy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Resolve falsy string literal (empty)', () => {
+		const code = `if ('') console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('falsy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Resolve null literal', () => {
+		const code = `if (null) console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('falsy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Resolve if statement with no else clause (truthy)', () => {
+		const code = `if (true) console.log('executed');`;
+		const expected = `console.log('executed');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-8: Remove if statement with no else clause (falsy)', () => {
+		const code = `before(); if (false) console.log('never'); after();`;
+		const expected = `before();\nafter();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-9: Resolve negative number literal', () => {
+		const code = `if (-1) console.log('truthy'); else console.log('falsy');`;
+		const expected = `console.log('truthy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-10: Resolve nested if statements', () => {
+		const code = `if (true) { if (false) inner(); else other(); }`;
+		const expected = `{\n  other();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not resolve if with variable condition', () => {
+		const code = `if (someVar) console.log('maybe');`;
+		const expected = `if (someVar) console.log('maybe');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not resolve if with function call condition', () => {
+		const code = `if (getValue()) console.log('maybe');`;
+		const expected = `if (getValue()) console.log('maybe');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not resolve if with expression condition', () => {
+		const code = `if (x + y) console.log('maybe');`;
+		const expected = `if (x + y) console.log('maybe');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not resolve if with member expression condition', () => {
+		const code = `if (obj.prop) console.log('maybe');`;
+		const expected = `if (obj.prop) console.log('maybe');`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
