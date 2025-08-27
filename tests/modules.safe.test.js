@@ -897,15 +897,75 @@ describe('SAFE: replaceBooleanExpressionsWithIf', async () => {
 });
 describe('SAFE: replaceSequencesWithExpressions', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceSequencesWithExpressions.js')).default;
-	it('TP-1: 2 expressions', () => {
+	it('TP-1: Replace sequence with 2 expressions in if statement', () => {
 		const code = `if (a) (b(), c());`;
 		const expected = `if (a) {\n  b();\n  c();\n}`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
-	it('TP-2: 3 expressions', () => {
+	it('TP-2: Replace sequence with 3 expressions within existing block', () => {
 		const code = `if (a) { (b(), c()); d() }`;
 		const expected = `if (a) {\n  b();\n  c();\n  d();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace sequence in while loop', () => {
+		const code = `while (x) (y++, z());`;
+		const expected = `while (x) {\n  y++;\n  z();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace sequence with 4 expressions', () => {
+		const code = `if (condition) (a(), b(), c(), d());`;
+		const expected = `if (condition) {\n  a();\n  b();\n  c();\n  d();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace sequence in for loop body', () => {
+		const code = `for (let i = 0; i < 10; i++) (foo(i), bar(i));`;
+		const expected = `for (let i = 0; i < 10; i++) {\n  foo(i);\n  bar(i);\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace sequence with mixed expression types', () => {
+		const code = `if (test) (x = 5, func(), obj.method());`;
+		const expected = `if (test) {\n  x = 5;\n  func();\n  obj.method();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Replace sequence in else clause', () => {
+		const code = `if (a) doSomething(); else (first(), second());`;
+		const expected = `if (a)\n  doSomething();\nelse {\n  first();\n  second();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace single expression (not a sequence)', () => {
+		const code = `if (a) b();`;
+		const expected = `if (a) b();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace sequence with only one expression', () => {
+		const code = `if (a) b;`;
+		const expected = `if (a) b;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace sequence in non-ExpressionStatement context', () => {
+		const code = `const result = (a(), b());`;
+		const expected = `const result = (a(), b());`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace sequence in return statement', () => {
+		const code = `function test() { return (x(), y()); }`;
+		const expected = `function test() { return (x(), y()); }`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace sequence in assignment', () => {
+		const code = `let value = (init(), compute());`;
+		const expected = `let value = (init(), compute());`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
