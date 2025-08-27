@@ -774,9 +774,69 @@ describe('SAFE: replaceIdentifierWithFixedValueNotAssignedAtDeclaration', async 
 });
 describe('SAFE: replaceNewFuncCallsWithLiteralContent', async () => {
 	const targetModule = (await import('../src/modules/safe/replaceNewFuncCallsWithLiteralContent.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace Function constructor with IIFE', () => {
 		const code = `new Function("!function() {console.log('hello world')}()")();`;
 		const expected = `!(function () {\n  console.log('hello world');\n}());`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Replace Function constructor with single expression', () => {
+		const code = `new Function("console.log('test')")();`;
+		const expected = `console.log('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace Function constructor with multiple statements', () => {
+		const code = `new Function("var x = 1; var y = 2; console.log(x + y);")();`;
+		const expected = `{\n  var x = 1;\n  var y = 2;\n  console.log(x + y);\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace Function constructor with empty string', () => {
+		const code = `new Function("")();`;
+		const expected = `'';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace Function constructor with variable declaration', () => {
+		const code = `new Function("let x = 'hello'; console.log(x);")();`;
+		const expected = `{\n  let x = 'hello';\n  console.log(x);\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace Function constructor with arguments', () => {
+		const code = `new Function("return a + b")(1, 2);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace Function constructor with multiple parameters', () => {
+		const code = `new Function("a", "b", "return a + b")();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace Function constructor with non-literal argument', () => {
+		const code = `new Function(someVariable)();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace non-Function constructor', () => {
+		const code = `new Array("1,2,3")();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace Function constructor not used as callee', () => {
+		const code = `var func = new Function("console.log('test')");`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not replace Function constructor with invalid syntax', () => {
+		const code = `new Function("invalid syntax {{{")();`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
