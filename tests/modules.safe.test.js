@@ -1210,9 +1210,33 @@ describe('SAFE: resolveMemberExpressionReferencesToArrayIndex', async () => {
 });
 describe('SAFE: resolveMemberExpressionsWithDirectAssignment', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveMemberExpressionsWithDirectAssignment.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace direct property assignments with literal values', () => {
 		const code = `function a() {} a.b = 3; a.c = '5'; console.log(a.b + a.c);`;
 		const expected = `function a() {\n}\na.b = 3;\na.c = '5';\nconsole.log(3 + '5');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Replace object property assignments', () => {
+		const code = `const obj = {}; obj.name = 'test'; obj.value = 42; const result = obj.name + obj.value;`;
+		const expected = `const obj = {};\nobj.name = 'test';\nobj.value = 42;\nconst result = 'test' + 42;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace computed property assignments', () => {
+		const code = `const data = {}; data['key'] = 'value'; console.log(data['key']);`;
+		const expected = `const data = {};\ndata['key'] = 'value';\nconsole.log('value');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace boolean and null assignments', () => {
+		const code = `const state = {}; state.flag = true; state.data = null; if (state.flag) console.log(state.data);`;
+		const expected = `const state = {};\nstate.flag = true;\nstate.data = null;\nif (true)\n  console.log(null);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace multiple references to same property', () => {
+		const code = `let config = {}; config.timeout = 5000; const a = config.timeout; const b = config.timeout + 1000;`;
+		const expected = `let config = {};\nconfig.timeout = 5000;\nconst a = 5000;\nconst b = 5000 + 1000;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
@@ -1224,6 +1248,42 @@ describe('SAFE: resolveMemberExpressionsWithDirectAssignment', async () => {
 	});
 	it(`TN-2: Don't resolve with update expressions`, () => {
 		const code = `const a = {}; a.b = 0; ++a.b + 2;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not resolve when assigned non-literal value', () => {
+		const code = `const obj = {}; obj.prop = getValue(); console.log(obj.prop);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not resolve when object has no declaration', () => {
+		const code = `unknown.prop = 'value'; console.log(unknown.prop);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not resolve when property is reassigned', () => {
+		const code = `const obj = {}; obj.data = 'first'; obj.data = 'second'; console.log(obj.data);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not resolve when used in assignment expression', () => {
+		const code = `const obj = {}; obj.counter = 0; obj.counter += 5; console.log(obj.counter);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not resolve when property is computed with variable', () => {
+		const code = `const obj = {}; const key = 'prop'; obj[key] = 'value'; console.log(obj[key]);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-8: Do not resolve when no references exist', () => {
+		const code = `const obj = {}; obj.unused = 'value';`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
