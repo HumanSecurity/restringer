@@ -1147,8 +1147,62 @@ describe('SAFE: resolveMemberExpressionReferencesToArrayIndex', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-2: Replace multiple array accesses on same array', () => {
+		const code = `const arr = [5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,7]; const x = arr[0], y = arr[10], z = arr[20];`;
+		const expected = `const arr = [\n  5,\n  5,\n  5,\n  5,\n  5,\n  5,\n  5,\n  5,\n  5,\n  5,\n  6,\n  6,\n  6,\n  6,\n  6,\n  6,\n  6,\n  6,\n  6,\n  6,\n  7\n];\nconst x = 5, y = 6, z = 7;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace array access with string literal elements', () => {
+		const code = `const words = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u']; const first = words[0]; const last = words[20];`;
+		const expected = `const words = [\n  'a',\n  'b',\n  'c',\n  'd',\n  'e',\n  'f',\n  'g',\n  'h',\n  'i',\n  'j',\n  'k',\n  'l',\n  'm',\n  'n',\n  'o',\n  'p',\n  'q',\n  'r',\n  's',\n  't',\n  'u'\n];\nconst first = 'a';\nconst last = 'u';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace array access in function call arguments', () => {
+		const code = `const nums = [9,9,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,8,8,8,7]; console.log(nums[0], nums[10], nums[20]);`;
+		const expected = `const nums = [\n  9,\n  9,\n  9,\n  9,\n  9,\n  9,\n  9,\n  9,\n  9,\n  9,\n  8,\n  8,\n  8,\n  8,\n  8,\n  8,\n  8,\n  8,\n  8,\n  8,\n  7\n];\nconsole.log(9, 8, 7);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 	it(`TN-1: Don't resolve references to array methods`, () => {
 		const code = `const a = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3];  b = a['indexOf']; c = a['length'];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not resolve arrays smaller than minimum length', () => {
+		const code = `const small = [1,2,3,4,5]; const x = small[0]; const y = small[2];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not resolve assignment to array elements', () => {
+		const code = `const items = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3]; items[0] = 99; items[10] = 88;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not resolve computed property access with variables', () => {
+		const code = `const data = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3]; const i = 5; const val = data[i];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not resolve out-of-bounds array access', () => {
+		const code = `const bounds = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3]; const invalid = bounds[100];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not resolve negative array indices', () => {
+		const code = `const negTest = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3]; const neg = negTest[-1];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not resolve floating point indices', () => {
+		const code = `const floatTest = [1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,3]; const flt = floatTest[1.5];`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
