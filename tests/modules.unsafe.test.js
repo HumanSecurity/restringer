@@ -335,14 +335,80 @@ describe('UNSAFE: resolveDefiniteBinaryExpressions', async () => {
 });
 describe('UNSAFE: resolveDefiniteMemberExpressions', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveDefiniteMemberExpressions.js')).default;
-	it('TP-1', () => {
+	it('TP-1: String and array indexing with properties', () => {
 		const code = `'123'[0]; 'hello'.length;`;
 		const expected = `'1';\n5;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-1', () => {
+	it('TP-2: Array literal indexing', () => {
+		const code = `[1, 2, 3][0]; [4, 5, 6][2];`;
+		const expected = `1;\n6;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: String indexing with different positions', () => {
+		const code = `'test'[1]; 'world'[4];`;
+		const expected = `'e';\n'd';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Array length property', () => {
+		const code = `[1, 2, 3, 4].length; ['a', 'b'].length;`;
+		const expected = `4;\n2;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Mixed literal types in arrays', () => {
+		const code = `['hello', 42, true][0]; [null, undefined, 'test'][2];`;
+		const expected = `'hello';\n'test';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Non-computed property access with identifier', () => {
+		const code = `'testing'.length; [1, 2, 3].length;`;
+		const expected = `7;\n3;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Do not transform update expressions', () => {
 		const code = `++[[]][0];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Do not transform method calls (callee position)', () => {
+		const code = `'test'.split(''); [1, 2, 3].join(',');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Do not transform computed properties with variables', () => {
+		const code = `'hello'[index]; arr[i];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Do not transform non-literal objects', () => {
+		const code = `obj.property; variable[0];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Do not transform empty literals', () => {
+		const code = `''[0]; [].length;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Do not transform complex property expressions', () => {
+		const code = `'test'[getValue()]; obj[prop + 'name'];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-7: Do not transform out-of-bounds access (handled by sandbox)', () => {
+		const code = `'abc'[10]; [1, 2][5];`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
