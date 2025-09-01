@@ -260,9 +260,75 @@ describe('UNSAFE: resolveBuiltinCalls', async () => {
 });
 describe('UNSAFE: resolveDefiniteBinaryExpressions', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveDefiniteBinaryExpressions.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Mixed arithmetic and string operations', () => {
 		const code = `5 * 3; '2' + 2; '10' - 1; 'o' + 'k'; 'o' - 'k'; 3 - -1;`;
 		const expected = `15;\n'22';\n9;\n'ok';\nNaN;\n4;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-2: Division and modulo operations', () => {
+		const code = `10 / 2; 7 % 3; 15 / 3;`;
+		const expected = `5;\n1;\n5;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Bitwise operations', () => {
+		const code = `5 & 3; 5 | 3; 5 ^ 3;`;
+		const expected = `1;\n7;\n6;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Comparison operations', () => {
+		const code = `5 > 3; 2 < 1; 5 === 5; 'a' !== 'b';`;
+		const expected = `true;\nfalse;\ntrue;\ntrue;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Negative number edge case handling', () => {
+		const code = `10 - 15; 3 - 8;`;
+		const expected = `-5;\n-5;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Null operations and string concatenation', () => {
+		const code = `null + 5; 'test' + 'ing';`;
+		const expected = `5;\n'testing';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Do not resolve expressions with variables', () => {
+		const code = `x + 5; a * b;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Do not resolve expressions with function calls', () => {
+		const code = `foo() + 5; Math.max(1, 2) * 3;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Do not resolve member expressions', () => {
+		const code = `obj.prop + 5; arr[0] * 2;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Do not resolve complex nested expressions', () => {
+		const code = `(x + y) * z; foo(a) + bar(b);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Do not resolve logical expressions (not BinaryExpressions)', () => {
+		const code = `true && false; true || false; !true;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Do not resolve expressions with undefined identifier', () => {
+		const code = `undefined + 3; x + undefined;`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
