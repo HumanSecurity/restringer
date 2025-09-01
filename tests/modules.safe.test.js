@@ -2075,4 +2075,52 @@ describe('SAFE: simplifyIfStatements', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-8: Populated consequent with empty alternate block', () => {
+		const code = `if (test) doSomething(); else {}`;
+		const expected = `if (test)\n  doSomething();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-9: Populated consequent with empty alternate statement', () => {
+		const code = `if (condition) action(); else;`;
+		const expected = `if (condition)\n  action();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-10: Complex expression in test with empty branches', () => {
+		const code = `if (a && b || c) {} else {}`;
+		const expected = `a && b || c;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-11: Nested empty if statements', () => {
+		const code = `if (outer) { if (inner) {} else {} }`;
+		const expected = `if (outer) {\n  inner;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not transform if with populated consequent and alternate', () => {
+		const code = `if (test) doThis(); else doThat();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not transform if with populated block statements', () => {
+		const code = `if (condition) { action1(); action2(); } else { action3(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not transform if with only populated consequent block', () => {
+		const code = `if (test) { performAction(); }`;
+		const expected = `if (test) {\n  performAction();\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not transform complex if-else chains', () => {
+		const code = `if (a) first(); else if (b) second(); else third();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
