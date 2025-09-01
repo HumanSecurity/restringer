@@ -416,14 +416,92 @@ describe('UNSAFE: resolveDefiniteMemberExpressions', async () => {
 });
 describe('UNSAFE: resolveDeterministicConditionalExpressions', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveDeterministicConditionalExpressions.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Boolean literals (true/false)', () => {
 		const code = `(true ? 1 : 2); (false ? 3 : 4);`;
 		const expected = `1;\n4;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-1', () => {
+	it('TP-2: Truthy string literals', () => {
+		const code = `('hello' ? 'yes' : 'no'); ('a' ? 42 : 0);`;
+		const expected = `'yes';\n42;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Falsy string literal (empty string)', () => {
+		const code = `('' ? 'yes' : 'no'); ('' ? 42 : 0);`;
+		const expected = `'no';\n0;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Truthy number literals', () => {
+		const code = `(1 ? 'one' : 'zero'); (42 ? 'yes' : 'no'); (123 ? 'positive' : 'zero');`;
+		const expected = `'one';\n'yes';\n'positive';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Falsy number literal (zero)', () => {
+		const code = `(0 ? 'yes' : 'no'); (0 ? 42 : 'zero');`;
+		const expected = `'no';\n'zero';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Null literal', () => {
+		const code = `(null ? 'yes' : 'no'); (null ? 'defined' : 'null');`;
+		const expected = `'no';\n'null';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-7: Nested conditional expressions (single pass)', () => {
+		const code = `(true ? (false ? 'inner1' : 'inner2') : 'outer');`;
+		const expected = `false ? 'inner1' : 'inner2';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-8: Complex expressions as branches', () => {
+		const code = `(1 ? console.log('truthy') : console.log('falsy'));`;
+		const expected = `console.log('truthy');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Non-literal test expressions', () => {
 		const code = `({} ? 1 : 2); ([].length ? 3 : 4);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Variable test expressions', () => {
+		const code = `(x ? 'yes' : 'no'); (condition ? true : false);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Function call test expressions', () => {
+		const code = `(getValue() ? 'yes' : 'no'); (check() ? 1 : 0);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Binary expression test expressions', () => {
+		const code = `(a + b ? 'yes' : 'no'); (x > 5 ? 'big' : 'small');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Member expression test expressions', () => {
+		const code = `(obj.prop ? 'yes' : 'no'); (arr[0] ? 'first' : 'empty');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Unary expressions (not literals)', () => {
+		const code = `(-1 ? 'negative' : 'zero'); (!true ? 'no' : 'yes');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-7: Undefined identifier (not literal)', () => {
+		const code = `(undefined ? 'defined' : 'undefined');`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
