@@ -1291,9 +1291,75 @@ describe('SAFE: resolveMemberExpressionsWithDirectAssignment', async () => {
 });
 describe('SAFE: resolveProxyCalls', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveProxyCalls.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace chained proxy calls with direct function calls', () => {
 		const code = `function call1(a, b) {return a + b;} function call2(c, d) {return call1(c, d);} function call3(e, f) {return call2(e, f);}`;
 		const expected = `function call1(a, b) {\n  return a + b;\n}\nfunction call2(c, d) {\n  return call1(c, d);\n}\nfunction call3(e, f) {\n  return call1(e, f);\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Replace proxy with no parameters', () => {
+		const code = `function target() { return 42; } function proxy() { return target(); } const result = proxy();`;
+		const expected = `function target() {\n  return 42;\n}\nfunction proxy() {\n  return target();\n}\nconst result = target();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace proxy with multiple parameters', () => {
+		const code = `function add(a, b, c) { return a + b + c; } function addProxy(x, y, z) { return add(x, y, z); } const sum = addProxy(1, 2, 3);`;
+		const expected = `function add(a, b, c) {\n  return a + b + c;\n}\nfunction addProxy(x, y, z) {\n  return add(x, y, z);\n}\nconst sum = add(1, 2, 3);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace proxy that calls another proxy (single-step resolution)', () => {
+		const code = `function base() { return 'test'; } function proxy1() { return base(); } function proxy2() { return proxy1(); } console.log(proxy2());`;
+		const expected = `function base() {\n  return 'test';\n}\nfunction proxy1() {\n  return base();\n}\nfunction proxy2() {\n  return base();\n}\nconsole.log(proxy1());`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace function with multiple statements', () => {
+		const code = `function target() { return 42; } function notProxy() { console.log('side effect'); return target(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace function with no return statement', () => {
+		const code = `function target() { return 42; } function notProxy() { target(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace function that returns non-call expression', () => {
+		const code = `function notProxy() { return 42; }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace function that calls member expression', () => {
+		const code = `const obj = { method: () => 42 }; function notProxy() { return obj.method(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace function with parameter count mismatch', () => {
+		const code = `function target(a, b) { return a + b; } function notProxy(x) { return target(x, 0); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not replace function with reordered parameters', () => {
+		const code = `function target(a, b) { return a - b; } function notProxy(x, y) { return target(y, x); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not replace function with modified parameters', () => {
+		const code = `function target(a) { return a * 2; } function notProxy(x) { return target(x + 1); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-8: Do not replace function with no references', () => {
+		const code = `function target() { return 42; } function unreferencedProxy() { return target(); }`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
