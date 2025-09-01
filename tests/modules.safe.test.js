@@ -1970,8 +1970,62 @@ describe('SAFE: simplifyCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-3: Mixed calls with complex arguments', () => {
+		const code = `func.call(this, a + b, getValue()); obj.method.apply(this, [x, y, z]);`;
+		const expected = `func(a + b, getValue());\nobj.method(x, y, z);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Calls on member expressions', () => {
+		const code = `obj.method.call(this, arg1); nested.obj.func.apply(this, [arg2]);`;
+		const expected = `obj.method(arg1);\nnested.obj.func(arg2);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Apply with empty array', () => {
+		const code = `func.apply(this, []);`;
+		const expected = `func();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Call and apply in same expression', () => {
+		const code = `func1.call(this, arg) + func2.apply(this, [arg]);`;
+		const expected = `func1(arg) + func2(arg);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 	it('TN-1: Ignore calls without ThisExpression', () => {
-		const code = `func1.apply({}); func2.call(null);`;
+		const code = `func1.apply({}); func2.call(null); func3.apply(obj);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not transform Function constructor calls', () => {
+		const code = `Function.call(this, 'return 42'); Function.apply(this, ['return 42']);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not transform calls on function expressions', () => {
+		const code = `(function() {}).call(this); (function() {}).apply(this, []);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not transform other method names', () => {
+		const code = `func.bind(this, arg); func.toString(this); func.valueOf(this);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not transform computed property access', () => {
+		const code = `func['call'](this, arg); obj['apply'](this, [arg]);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not transform calls with this in wrong position', () => {
+		const code = `func.call(arg, this); func.apply(arg1, this, arg2);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
