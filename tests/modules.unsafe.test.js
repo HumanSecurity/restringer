@@ -191,6 +191,24 @@ describe('UNSAFE: resolveBuiltinCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
+	it('TP-4: Member expression with literal arguments', () => {
+		const code = `String.fromCharCode(72, 101, 108, 108, 111);`;
+		const expected = `'Hello';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Multiple builtin calls', () => {
+		const code = `btoa('test') + atob('dGVzdA==');`;
+		const expected = `'dGVzdA==' + 'test';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: String method with multiple arguments', () => {
+		const code = `'hello world'.replace('world', 'universe');`;
+		const expected = `'hello universe';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
 	it('TN-1: querySelector', () => {
 		const code = `document.querySelector('div');`;
 		const expected = code;
@@ -205,6 +223,36 @@ describe('UNSAFE: resolveBuiltinCalls', async () => {
 	});
 	it('TN-3: Overwritten builtin', () => {
 		const code = `function atob() {return 1;} atob('test');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Skip builtin function call', () => {
+		const code = `Array(5);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Skip member expression with restricted property', () => {
+		const code = `'test'.length;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Function call with this expression', () => {
+		const code = `this.btoa('test');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-7: Constructor property access', () => {
+		const code = `String.constructor('return 1');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-8: Member expression with computed property using variable', () => {
+		const code = `String[methodName]('test');`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
