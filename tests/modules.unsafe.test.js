@@ -509,15 +509,75 @@ describe('UNSAFE: resolveDeterministicConditionalExpressions', async () => {
 });
 describe('UNSAFE: resolveEvalCallsOnNonLiterals', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveEvalCallsOnNonLiterals.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Function call that returns string', () => {
 		const code = `eval(function(a) {return a}('atob'));`;
 		const expected = `atob;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TP-2', () => {
+	it('TP-2: Array access returning empty string', () => {
 		const code = `eval([''][0]);`;
 		const expected = `''`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Variable reference resolution', () => {
+		const code = `var x = 'console.log("test")'; eval(x);`;
+		const expected = `var x = 'console.log("test")';\nconsole.log('test');`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Function expression IIFE', () => {
+		const code = `eval((function() { return 'var a = 5;'; })());`;
+		const expected = `var a = 5;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Member expression property access', () => {
+		const code = `var obj = {code: 'var y = 10;'}; eval(obj.code);`;
+		const expected = `var obj = { code: 'var y = 10;' };\nvar y = 10;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Array index with complex expression', () => {
+		const code = `var arr = ['if (true) { x = 1; }']; eval(arr[0]);`;
+		const expected = `var arr = ['if (true) { x = 1; }'];\nif (true) {\n  x = 1;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Eval with literal string (already handled by another module)', () => {
+		const code = `eval('console.log("literal")');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Non-eval function calls', () => {
+		const code = `execute(function() { return 'code'; }());`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Eval with multiple arguments', () => {
+		const code = `eval('code', extra);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Eval with no arguments', () => {
+		const code = `eval();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Computed member expression for eval', () => {
+		const code = `obj['eval'](dynamicCode);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Eval with non-evaluable expression', () => {
+		const code = `eval(undefined);`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
