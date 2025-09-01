@@ -1759,6 +1759,40 @@ describe('SAFE: unwrapIIFEs', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-4: IIFE with multiple statements unwrapped', () => {
+		const code = `!function() {
+	var x = 1;
+	var y = 2;
+	console.log(x + y);
+}();`;
+		const expected = `var x = 1;\nvar y = 2;\nconsole.log(x + y);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not unwrap IIFE with arguments', () => {
+		const code = `var result = (function(x) { return x * 2; })(5);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not unwrap named function IIFE', () => {
+		const code = `var result = (function named() { return 42; })();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not unwrap IIFE in assignment context', () => {
+		const code = `obj.prop = (function() { return getValue(); })();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Arrow function IIFE with expression body', () => {
+		const code = `var result = (() => someValue)();`;
+		const expected = `var result = someValue;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: unwrapSimpleOperations', async () => {
 	const targetModule = (await import('../src/modules/safe/unwrapSimpleOperations.js')).default;
