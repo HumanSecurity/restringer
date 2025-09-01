@@ -1534,9 +1534,87 @@ describe('SAFE: resolveProxyVariables', async () => {
 });
 describe('SAFE: resolveRedundantLogicalExpressions', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveRedundantLogicalExpressions.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Simplify basic true and false literals with && and ||', () => {
 		const code = `if (false && true) {} if (false || true) {} if (true && false) {} if (true || false) {}`;
 		const expected = `if (false) {\n}\nif (true) {\n}\nif (false) {\n}\nif (true) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Simplify AND expressions with truthy left operand', () => {
+		const code = `if (true && someVar) {} if (1 && someFunc()) {} if ("str" && obj.prop) {}`;
+		const expected = `if (someVar) {\n}\nif (someFunc()) {\n}\nif (obj.prop) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Simplify AND expressions with falsy left operand', () => {
+		const code = `if (false && someVar) {} if (0 && someFunc()) {} if ("" && obj.prop) {} if (null && x) {}`;
+		const expected = `if (false) {\n}\nif (0) {\n}\nif ('') {\n}\nif (null) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Simplify AND expressions with truthy right operand', () => {
+		const code = `if (someVar && true) {} if (someFunc() && 1) {} if (obj.prop && "str") {}`;
+		const expected = `if (someVar) {\n}\nif (someFunc()) {\n}\nif (obj.prop) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Simplify AND expressions with falsy right operand', () => {
+		const code = `if (someVar && false) {} if (someFunc() && 0) {} if (obj.prop && "") {} if (x && null) {}`;
+		const expected = `if (false) {\n}\nif (0) {\n}\nif ('') {\n}\nif (null) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Simplify OR expressions with truthy left operand', () => {
+		const code = `if (true || someVar) {} if (1 || someFunc()) {} if ("str" || obj.prop) {}`;
+		const expected = `if (true) {\n}\nif (1) {\n}\nif ('str') {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Simplify OR expressions with falsy left operand', () => {
+		const code = `if (false || someVar) {} if (0 || someFunc()) {} if ("" || obj.prop) {} if (null || x) {}`;
+		const expected = `if (someVar) {\n}\nif (someFunc()) {\n}\nif (obj.prop) {\n}\nif (x) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-8: Simplify OR expressions with truthy right operand', () => {
+		const code = `if (someVar || true) {} if (someFunc() || 1) {} if (obj.prop || "str") {}`;
+		const expected = `if (true) {\n}\nif (1) {\n}\nif ('str') {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-9: Simplify OR expressions with falsy right operand', () => {
+		const code = `if (someVar || false) {} if (someFunc() || 0) {} if (obj.prop || "") {} if (x || null) {}`;
+		const expected = `if (someVar) {\n}\nif (someFunc()) {\n}\nif (obj.prop) {\n}\nif (x) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-10: Handle complex expressions with nested logical operators', () => {
+		const code = `if (true && (someVar && false)) {} if (false || (x || true)) {}`;
+		const expected = `if (someVar && false) {\n}\nif (x || true) {\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not simplify when both operands are non-literals', () => {
+		const code = `if (someVar && otherVar) {} if (func1() || func2()) {} if (obj.a && obj.b) {}`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not simplify non-logical expressions', () => {
+		const code = `if (a + b) {} if (a === b) {} if (a > b) {} if (!a) {}`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not simplify logical expressions outside if statements', () => {
+		const code = `if (someVar) { const x = true && someVar; const y = false || someFunc(); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not simplify unsupported logical operators (if any)', () => {
+		const code = `if (a & b) {} if (a | b) {} if (a ^ b) {}`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
