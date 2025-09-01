@@ -1465,16 +1465,70 @@ describe('SAFE: resolveProxyReferences', async () => {
 });
 describe('SAFE: resolveProxyVariables', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveProxyVariables.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace proxy variable references with target identifier', () => {
 		const code = `const a2b = atob; console.log(a2b('NDI='));`;
 		const expected = `console.log(atob('NDI='));`;
 		const result = applyModuleToCode(code, targetModule, true);
 		assert.strictEqual(result, expected);
 	});
-	it('TP-2', () => {
+	it('TP-2: Remove unused proxy variable declaration', () => {
 		const code = `const a2b = atob, a = 3; console.log(a2b('NDI='));`;
 		const expected = `const a = 3;\nconsole.log(atob('NDI='));`;
 		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace multiple references to same proxy', () => {
+		const code = `const alias = original; console.log(alias); console.log(alias);`;
+		const expected = `console.log(original);\nconsole.log(original);`;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Remove proxy variable with no references', () => {
+		const code = `const unused = target; console.log('other');`;
+		const expected = `console.log('other');`;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace with let declaration', () => {
+		const code = `let proxy = original; console.log(proxy);`;
+		const expected = `console.log(original);`;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace with var declaration', () => {
+		const code = `var proxy = original; console.log(proxy);`;
+		const expected = `console.log(original);`;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace when proxy is assigned non-identifier', () => {
+		const code = `const proxy = getValue(); console.log(proxy);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace when proxy is modified', () => {
+		const code = `const proxy = original; proxy = 'modified'; console.log(proxy);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace when proxy is updated', () => {
+		const code = `const proxy = original; proxy++; console.log(proxy);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace when reference is used in assignment', () => {
+		const code = `const proxy = original; const x = proxy = 'new';`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace non-identifier initialization', () => {
+		const code = `const proxy = obj.prop; console.log(proxy);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
 });
