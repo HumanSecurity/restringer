@@ -2,7 +2,7 @@
  * Find all return statements and if statements that contain sequence expressions.
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of nodes with sequence expressions that can be rearranged
+ * @return {ASTNode[]} Array of nodes with sequence expressions that can be rearranged
  */
 export function rearrangeSequencesMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.ReturnStatement

@@ -13,7 +13,7 @@ const relevantParents = [
  * 
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of dead identifier nodes
+ * @return {ASTNode[]} Array of dead identifier nodes
  */
 function removeDeadNodesMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.Identifier;

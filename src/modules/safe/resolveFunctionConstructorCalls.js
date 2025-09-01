@@ -34,7 +34,7 @@ function buildArgumentsString(args) {
  * 4. Generating AST without nodeIds to avoid conflicts
  * 
  * @param {Array} argumentValues - Array of literal values from constructor call
- * @return {Object|null} Function expression AST node or null if generation fails
+ * @return {ASTNode|null} Function expression AST node or null if generation fails
  */
 function generateFunctionExpression(argumentValues) {
 	const argsString = buildArgumentsString(argumentValues);
@@ -66,7 +66,7 @@ function generateFunctionExpression(argumentValues) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of CallExpression nodes that can be transformed
+ * @return {ASTNode[]} Array of CallExpression nodes that can be transformed
  */
 export function resolveFunctionConstructorCallsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.CallExpression || [];

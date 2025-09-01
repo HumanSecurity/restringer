@@ -16,7 +16,7 @@ const FUNCTION_EXPRESSION_TYPES = ['FunctionExpression', 'ArrowFunctionExpressio
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of call expression nodes that can be unwrapped
+ * @return {ASTNode[]} Array of call expression nodes that can be unwrapped
  */
 export function replaceCallExpressionsWithUnwrappedIdentifierMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance

@@ -9,7 +9,7 @@ const MIN_ARRAY_LENGTH = 20;
  * and is within the bounds of the array. Non-numeric properties like
  * 'length' or 'indexOf' are excluded.
  * 
- * @param {Object} memberExpr - The MemberExpression node
+ * @param {ASTNode} memberExpr - The MemberExpression node
  * @param {number} arrayLength - Length of the array being accessed
  * @return {boolean} True if this is a valid numeric index access
  */
@@ -38,7 +38,7 @@ function isValidArrayIndex(memberExpr, arrayLength) {
  * 2. Have numeric literal properties within array bounds
  * 3. Are not accessing array methods or properties
  * 
- * @param {Object} ref - Reference node to check
+ * @param {ASTNode} ref - Reference node to check
  * @param {number} arrayLength - Length of the array being accessed
  * @return {boolean} True if reference can be resolved to array element
  */
@@ -71,7 +71,7 @@ function isResolvableReference(ref, arrayLength) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of VariableDeclarator nodes that can be processed
+ * @return {ASTNode[]} Array of VariableDeclarator nodes that can be processed
  */
 export function resolveMemberExpressionReferencesToArrayIndexMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.VariableDeclarator || [];
@@ -112,7 +112,7 @@ export function resolveMemberExpressionReferencesToArrayIndexMatch(arb, candidat
  * - Assignment targets are excluded
  * 
  * @param {Arborist} arb - The Arborist instance to mark changes on
- * @param {Object} n - The VariableDeclarator node with array initialization
+ * @param {ASTNode} n - The VariableDeclarator node with array initialization
  * @return {Arborist} The modified Arborist instance
  */
 export function resolveMemberExpressionReferencesToArrayIndexTransform(arb, n) {

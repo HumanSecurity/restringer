@@ -9,7 +9,7 @@ const logicalOperators = ['&&', '||'];
  * 
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of expression statement nodes with logical expressions
+ * @return {ASTNode[]} Array of expression statement nodes with logical expressions
  */
 export function replaceBooleanExpressionsWithIfMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.ExpressionStatement;

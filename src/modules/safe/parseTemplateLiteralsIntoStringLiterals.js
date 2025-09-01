@@ -4,7 +4,7 @@ import {createNewNode} from '../utils/createNewNode.js';
  * Find all template literals that contain only literal expressions and can be converted to string literals.
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of template literal nodes that can be converted to string literals
+ * @return {ASTNode[]} Array of template literal nodes that can be converted to string literals
  */
 export function parseTemplateLiteralsIntoStringLiteralsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = [].concat(arb.ast[0].typeMap.TemplateLiteral);

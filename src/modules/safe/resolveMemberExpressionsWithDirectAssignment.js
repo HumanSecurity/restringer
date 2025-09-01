@@ -7,7 +7,7 @@
  * This function is conservative about computed access - it only resolves when the property
  * is a direct literal, not a variable that happens to have a literal value.
  * 
- * @param {Object} memberExpr - The MemberExpression node
+ * @param {ASTNode} memberExpr - The MemberExpression node
  * @return {string|number|null} The property name/value, or null if not determinable
  */
 function getPropertyName(memberExpr) {
@@ -37,7 +37,7 @@ function getPropertyName(memberExpr) {
  * - Assignment expressions where the member expression is on the left side
  * - Update expressions like ++obj.prop or obj.prop++
  * 
- * @param {Object} memberExpr - The MemberExpression node to check
+ * @param {ASTNode} memberExpr - The MemberExpression node to check
  * @return {boolean} True if this is a modification, false if it's a read access
  */
 function isModifyingReference(memberExpr) {
@@ -67,10 +67,10 @@ function isModifyingReference(memberExpr) {
  * that access the same property. Excludes references that modify the property to ensure
  * the transformation is safe.
  * 
- * @param {Object} objectDeclNode - The declaration node of the object
+ * @param {ASTNode} objectDeclNode - The declaration node of the object
  * @param {string|number} propertyName - The name/value of the property to find
  * @param {Object} assignmentMemberExpr - The original assignment member expression to exclude
- * @return {Array} Array of reference nodes that can be replaced
+ * @return {Object[]} Array of reference nodes that can be replaced
  */
 function findReplaceablePropertyReferences(objectDeclNode, propertyName, assignmentMemberExpr) {
 	const replaceableRefs = [];
@@ -122,7 +122,7 @@ function findReplaceablePropertyReferences(objectDeclNode, propertyName, assignm
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of objects with memberExpr, propertyName, replacementNode, and references
+ * @return {Object[]} Array of objects with memberExpr, propertyName, replacementNode, and references
  */
 export function resolveMemberExpressionsWithDirectAssignmentMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.MemberExpression;

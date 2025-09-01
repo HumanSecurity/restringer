@@ -11,7 +11,7 @@ import {generateHash} from '../utils/generateHash.js';
  * - Multiple statements become BlockStatement
  *
  * @param {string} codeStr - The JavaScript code string to parse
- * @return {Object} The parsed AST node
+ * @return {ASTNode} The parsed AST node
  */
 function parseCodeStringToAST(codeStr) {
 	if (!codeStr) {
@@ -53,9 +53,9 @@ function parseCodeStringToAST(codeStr) {
  * the call expression itself. For variable assignments and other contexts,
  * we replace just the call expression.
  *
- * @param {Object} callNode - The call expression node (parent of NewExpression)
- * @param {Object} replacementNode - The AST node that will replace the call
- * @return {Object} The node that should be replaced
+ * @param {ASTNode} callNode - The call expression node (parent of NewExpression)
+ * @param {ASTNode} replacementNode - The AST node that will replace the call
+ * @return {ASTNode} The node that should be replaced
  */
 function getReplacementTarget(callNode, replacementNode) {
 	// For BlockStatement replacements in standalone expressions, replace the entire ExpressionStatement
@@ -85,7 +85,7 @@ function getReplacementTarget(callNode, replacementNode) {
  *
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of NewExpression nodes that can be safely replaced
+ * @return {ASTNode[]} Array of NewExpression nodes that can be safely replaced
  */
 export function replaceNewFuncCallsWithLiteralContentMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance
@@ -119,7 +119,7 @@ export function replaceNewFuncCallsWithLiteralContentMatch(arb, candidateFilter 
  * function creation and execution.
  *
  * @param {Arborist} arb - The arborist instance to modify
- * @param {Object} n - The NewExpression node to transform
+ * @param {ASTNode} n - The NewExpression node to transform
  * @return {Arborist} The modified arborist instance
  */
 export function replaceNewFuncCallsWithLiteralContentTransform(arb, n) {

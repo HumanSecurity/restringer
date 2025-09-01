@@ -7,7 +7,7 @@ const relevantTypes = ['MethodDefinition', 'Property'];
  * Find all computed member expressions, method definitions, and properties that can be converted to dot notation.
  * @param {Arborist} arb An Arborist instance
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of nodes that match the criteria for normalization
+ * @return {ASTNode[]} Array of nodes that match the criteria for normalization
  */
 export function normalizeComputedMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = []

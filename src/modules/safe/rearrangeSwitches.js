@@ -11,7 +11,7 @@ const maxRepetition = 50;
  * 
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of matching switch statement nodes
+ * @return {ASTNode[]} Array of matching switch statement nodes
  */
 export function rearrangeSwitchesMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.SwitchStatement;

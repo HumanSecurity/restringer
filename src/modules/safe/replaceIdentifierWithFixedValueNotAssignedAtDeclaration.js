@@ -74,7 +74,7 @@ function getSingleAssignmentReference(n) {
  *
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of identifier nodes that can be safely replaced
+ * @return {ASTNode[]} Array of identifier nodes that can be safely replaced
  */
 export function replaceIdentifierWithFixedValueNotAssignedAtDeclarationMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance

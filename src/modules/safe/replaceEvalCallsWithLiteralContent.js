@@ -10,7 +10,7 @@ import {generateHash} from '../utils/generateHash.js';
  * multiple statements, and expression statements appropriately.
  * 
  * @param {string} code - The code string to parse
- * @return {Object} The parsed AST node
+ * @return {ASTNode} The parsed AST node
  */
 function parseEvalArgument(code) {
 	let body = generateFlatAST(code, {detailed: false, includeSrc: false})[0].body;
@@ -40,9 +40,9 @@ function parseEvalArgument(code) {
  * This handles the edge case where eval returns a function that is immediately
  * called, such as eval('Function')('alert("hacked!")').
  * 
- * @param {Object} evalNode - The original eval call node
- * @param {Object} replacementNode - The parsed replacement AST node
- * @return {Object} The modified call expression with eval replaced
+ * @param {ASTNode} evalNode - The original eval call node
+ * @param {ASTNode} replacementNode - The parsed replacement AST node
+ * @return {ASTNode} The modified call expression with eval replaced
  */
 function handleCalleeReplacement(evalNode, replacementNode) {
 	// Unwrap expression statement if needed
@@ -72,7 +72,7 @@ function handleCalleeReplacement(evalNode, replacementNode) {
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of eval call expression nodes that can be replaced
+ * @return {ASTNode[]} Array of eval call expression nodes that can be replaced
  */
 export function replaceEvalCallsWithLiteralContentMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance
@@ -101,7 +101,7 @@ export function replaceEvalCallsWithLiteralContentMatch(arb, candidateFilter = (
  * including block statements, expression statements, and nested call expressions.
  * 
  * @param {Arborist} arb - The arborist instance to modify
- * @param {Object} node - The eval call expression node to transform
+ * @param {ASTNode} node - The eval call expression node to transform
  * @return {Arborist} The modified arborist instance
  */
 export function replaceEvalCallsWithLiteralContentTransform(arb, node) {

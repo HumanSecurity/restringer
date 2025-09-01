@@ -5,7 +5,7 @@
  * and converts each one into a standalone ExpressionStatement AST node.
  * 
  * @param {Array} expressions - Array of expression AST nodes from SequenceExpression
- * @return {Array} Array of ExpressionStatement AST nodes
+ * @return {ASTNode[]} Array of ExpressionStatement AST nodes
  */
 function createExpressionStatements(expressions) {
 	const statements = [];
@@ -27,7 +27,7 @@ function createExpressionStatements(expressions) {
  * @param {Array} parentBody - Original body array from BlockStatement
  * @param {number} targetIndex - Index of statement to replace  
  * @param {Array} replacementStatements - Array of statements to insert
- * @return {Array} New body array with replacements
+ * @return {ASTNode[]} New body array with replacements
  */
 function createReplacementBody(parentBody, targetIndex, replacementStatements) {
 	const newBody = [];
@@ -62,7 +62,7 @@ function createReplacementBody(parentBody, targetIndex, replacementStatements) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of nodes that can be transformed
+ * @return {ASTNode[]} Array of nodes that can be transformed
  */
 export function replaceSequencesWithExpressionsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.ExpressionStatement || [];

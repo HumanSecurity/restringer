@@ -14,7 +14,7 @@ const LOOP_STATEMENT_REGEX = /(For.*Statement|WhileStatement|DoWhileStatement)/;
  * A proxy reference is a variable that simply points to another variable
  * without modification. For example: `const b = a;` where `b` is a proxy to `a`.
  * 
- * @param {Object} declaratorNode - The VariableDeclarator node to check
+ * @param {ASTNode} declaratorNode - The VariableDeclarator node to check
  * @return {boolean} True if this is a valid proxy reference pattern
  */
 function isProxyReferencePattern(declaratorNode) {
@@ -46,8 +46,8 @@ function isProxyReferencePattern(declaratorNode) {
  * self-references and ensuring the proxy variable isn't used in its own
  * initialization.
  * 
- * @param {Object} proxyIdentifier - The main identifier being proxied
- * @param {Object} replacementNode - The node that will replace the proxy
+ * @param {ASTNode} proxyIdentifier - The main identifier being proxied
+ * @param {ASTNode} replacementNode - The node that will replace the proxy
  * @return {boolean} True if the replacement is safe
  */
 function isReplacementSafe(proxyIdentifier, replacementNode) {
@@ -92,7 +92,7 @@ function isReplacementSafe(proxyIdentifier, replacementNode) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of objects with proxyNode, targetNode, and references
+ * @return {Object[]} Array of objects with proxyNode, targetNode, and references
  */
 export function resolveProxyReferencesMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.VariableDeclarator;

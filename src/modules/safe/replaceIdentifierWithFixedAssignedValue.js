@@ -33,7 +33,7 @@ function isObjectPropertyName(n) {
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of identifier nodes that can have their references replaced
+ * @return {ASTNode[]} Array of identifier nodes that can have their references replaced
  */
 export function replaceIdentifierWithFixedAssignedValueMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance

@@ -5,7 +5,7 @@
  * and that statement must be a return statement. This ensures the function
  * doesn't perform any side effects beyond passing through arguments.
  * 
- * @param {Object} funcNode - The FunctionDeclaration node to check
+ * @param {ASTNode} funcNode - The FunctionDeclaration node to check
  * @return {boolean} True if function has only a return statement
  */
 function hasOnlyReturnStatement(funcNode) {
@@ -66,7 +66,7 @@ function areParametersPassedThrough(params, callArgs) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of objects with funcNode, targetCallee, and references
+ * @return {Object[]} Array of objects with funcNode, targetCallee, and references
  */
 export function resolveProxyCallsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.FunctionDeclaration;

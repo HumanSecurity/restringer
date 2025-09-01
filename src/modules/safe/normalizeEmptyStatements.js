@@ -5,7 +5,7 @@ const controlFlowStatementTypes = ['ForStatement', 'ForInStatement', 'ForOfState
  * Find all empty statements that can be safely removed.
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of empty statement nodes that can be safely removed
+ * @return {ASTNode[]} Array of empty statement nodes that can be safely removed
  */
 export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = []

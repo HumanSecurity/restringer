@@ -20,7 +20,7 @@ const RETURNABLE_TYPES = ['Literal', 'Identifier'];
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
  * @param {Function} candidateFilter - Optional filter to apply on candidates
- * @return {Array} Array of function expression nodes that can be replaced
+ * @return {ASTNode[]} Array of function expression nodes that can be replaced
  */
 export function replaceFunctionShellsWithWrappedValueIIFEMatch(arb, candidateFilter = () => true) {
 	// Direct access to typeMap without spread operator for better performance

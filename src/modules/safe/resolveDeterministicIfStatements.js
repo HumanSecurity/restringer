@@ -30,7 +30,7 @@ function isLiteralTruthy(value) {
  * - Literal nodes: return the literal value directly
  * - UnaryExpression nodes: evaluate the unary operation and return result
  * 
- * @param {Object} testNode - The test condition AST node (Literal or UnaryExpression)
+ * @param {ASTNode} testNode - The test condition AST node (Literal or UnaryExpression)
  * @return {*} The evaluated literal value
  */
 function evaluateTestValue(testNode) {
@@ -71,8 +71,8 @@ function evaluateTestValue(testNode) {
  * Returning null indicates the if statement should be removed entirely.
  * Handles both Literal and UnaryExpression test conditions.
  * 
- * @param {Object} ifNode - The IfStatement AST node to resolve
- * @return {Object|null} The replacement node or null to remove
+ * @param {ASTNode} ifNode - The IfStatement AST node to resolve
+ * @return {ASTNode|null} The replacement node or null to remove
  */
 function getReplacementNode(ifNode) {
 	const testValue = evaluateTestValue(ifNode.test);
@@ -100,7 +100,7 @@ function getReplacementNode(ifNode) {
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
  * @param {Function} candidateFilter - Filter function to apply to candidates
- * @return {Array} Array of IfStatement nodes that can be resolved
+ * @return {ASTNode[]} Array of IfStatement nodes that can be resolved
  */
 export function resolveDeterministicIfStatementsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.IfStatement || [];
@@ -139,7 +139,7 @@ export function resolveDeterministicIfStatementsMatch(arb, candidateFilter = () 
  * that will always take the same path at runtime.
  * 
  * @param {Arborist} arb - The Arborist instance to mark changes on
- * @param {Object} n - The IfStatement node to transform
+ * @param {ASTNode} n - The IfStatement node to transform
  * @return {Arborist} The modified Arborist instance
  */
 export function resolveDeterministicIfStatementsTransform(arb, n) {

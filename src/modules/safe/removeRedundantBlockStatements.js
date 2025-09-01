@@ -9,7 +9,7 @@ const redundantBlockParentTypes = ['BlockStatement', 'Program'];
  * 
  * @param {Arborist} arb
  * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Array} Array of redundant block statement nodes
+ * @return {ASTNode[]} Array of redundant block statement nodes
  */
 export function removeRedundantBlockStatementsMatch(arb, candidateFilter = () => true) {
 	const relevantNodes = arb.ast[0].typeMap.BlockStatement;
