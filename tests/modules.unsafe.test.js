@@ -26,9 +26,69 @@ function applyModuleToCode(code, func, looped = false) {
 
 describe('UNSAFE: normalizeRedundantNotOperator', async () => {
 	const targetModule = (await import('../src/modules/unsafe/normalizeRedundantNotOperator.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Mixed literals and expressions', () => {
 		const code = `!true || !false || !0 || !1 || !a || !'a' || ![] || !{} || !-1 || !!true || !!!true`;
 		const expected = `false || true || true || false || !a || false || false || false || false || true || false;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-2: String literals', () => {
+		const code = `!'' || !'hello' || !'0' || !' '`;
+		const expected = `true || false || false || false;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Number literals', () => {
+		const code = `!42 || !-42 || !0.5 || !-0.5`;
+		const expected = `false || false || false || false;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Null literal', () => {
+		const code = `!null`;
+		const expected = `true;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Empty array and object literals', () => {
+		const code = `!{} || ![]`;
+		const expected = `false || false;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Simple nested NOT operations', () => {
+		const code = `!!false || !!true`;
+		const expected = `false || true;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Do not normalize complex literals that cannot be safely evaluated', () => {
+		const code = `!Infinity || !-Infinity || !undefined || ![1,2,3] || !{a:1}`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Do not normalize NOT on variables', () => {
+		const code = `!variable || !obj.prop || !func()`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Do not normalize NOT on complex expressions', () => {
+		const code = `!(a + b) || !(x > y) || !(z && w)`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Do not normalize NOT on function calls', () => {
+		const code = `!getValue() || !Math.random() || !Array.isArray(arr)`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Do not normalize NOT on computed properties', () => {
+		const code = `!obj[key] || !arr[0] || !matrix[i][j]`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
