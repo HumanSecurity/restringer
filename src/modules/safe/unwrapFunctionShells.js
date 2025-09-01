@@ -4,10 +4,10 @@ const FUNCTION_TYPES = ['FunctionDeclaration', 'FunctionExpression'];
  * Gets the property name from a member expression property.
  * 
  * @param {ASTNode} property - The property node from MemberExpression
- * @return {string|null} The property name or null if not extractable
+ * @return {string} The property name or an empty string if not extractable
  */
 function getPropertyName(property) {
-	return property?.name || property?.value || null;
+	return property?.name || property?.value || '';
 }
 
 /**
@@ -31,7 +31,7 @@ function createUnwrappedFunction(outerFunction, innerFunction) {
 	
 	// Transfer parameters from outer function if inner function has no parameters
 	if (outerFunction.params.length && !replacementNode.params.length) {
-		replacementNode.params = [...outerFunction.params];
+		replacementNode.params = outerFunction.params.slice();
 	}
 	
 	return replacementNode;
@@ -52,9 +52,8 @@ function createUnwrappedFunction(outerFunction, innerFunction) {
  * @return {ASTNode[]} Array of function nodes that can be unwrapped
  */
 export function unwrapFunctionShellsMatch(arb, candidateFilter = () => true) {
-	const functionExpressions = arb.ast[0].typeMap.FunctionExpression;
-	const functionDeclarations = arb.ast[0].typeMap.FunctionDeclaration;
-	const relevantNodes = [...functionExpressions, ...functionDeclarations];
+	const relevantNodes = arb.ast[0].typeMap.FunctionExpression
+							.concat(arb.ast[0].typeMap.FunctionDeclaration);
 	const matches = [];
 	
 	for (let i = 0; i < relevantNodes.length; i++) {

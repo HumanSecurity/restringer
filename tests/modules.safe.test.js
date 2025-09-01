@@ -1705,6 +1705,12 @@ describe('SAFE: unwrapFunctionShells', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TN-9: Do not unwrap arrow function as outer function', () => {
+		const code = `const arrow = (x) => { return function inner() { return x * 3; }.apply(this, arguments); };`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: unwrapIIFEs', async () => {
 	const targetModule = (await import('../src/modules/safe/unwrapIIFEs.js')).default;
