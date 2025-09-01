@@ -659,9 +659,99 @@ describe('UNSAFE: resolveFunctionToArray', async () => {
 });
 describe('UNSAFE: resolveInjectedPrototypeMethodCalls', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveInjectedPrototypeMethodCalls.js')).default;
-	it('TP-1', () => {
+	it('TP-1: String prototype method injection', () => {
 		const code = `String.prototype.secret = function () {return 'secret ' + this;}; 'hello'.secret();`;
 		const expected = `String.prototype.secret = function () {\n  return 'secret ' + this;\n};\n'secret hello';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-2: Number prototype method injection', () => {
+		const code = `Number.prototype.double = function () {return this * 2;}; (5).double();`;
+		const expected = `Number.prototype.double = function () {\n  return this * 2;\n};\n10;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Array prototype method injection', () => {
+		const code = `Array.prototype.first = function () {return this[0];}; [1, 2, 3].first();`;
+		const expected = `Array.prototype.first = function () {\n  return this[0];\n};\n1;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Method with parameters', () => {
+		const code = `String.prototype.multiply = function (n) {return this + this;}; 'hi'.multiply(2);`;
+		const expected = `String.prototype.multiply = function (n) {\n  return this + this;\n};\n'hihi';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Multiple calls to same injected method', () => {
+		const code = `String.prototype.shout = function () {return this.toUpperCase() + '!';}; 'hello'.shout(); 'world'.shout();`;
+		const expected = `String.prototype.shout = function () {\n  return this.toUpperCase() + '!';\n};\n'HELLO!';\n'WORLD!';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Identifier assignment to prototype method', () => {
+		const code = `function helper() {return 'helped';} String.prototype.help = helper; 'test'.help();`;
+		const expected = `function helper() {\n  return 'helped';\n}\nString.prototype.help = helper;\n'helped';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-7: Method call with missing arguments resolves to expected result', () => {
+		const code = `String.prototype.test = function (a, b) {return a + b;}; 'hello'.test();`;
+		const expected = `String.prototype.test = function (a, b) {\n  return a + b;\n};\nNaN;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-8: Arrow function prototype method injection', () => {
+		const code = `String.prototype.reverse = () => 'reversed'; 'hello'.reverse();`;
+		const expected = `String.prototype.reverse = () => 'reversed';\n'reversed';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-9: Arrow function with parameters', () => {
+		const code = `String.prototype.repeat = (n) => 'repeated'; 'test'.repeat(3);`;
+		const expected = `String.prototype.repeat = n => 'repeated';\n'repeated';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-10: Arrow function using closure variable', () => {
+		const code = `const value = 'closure'; String.prototype.getClosure = () => value; 'hello'.getClosure();`;
+		const expected = `const value = 'closure';\nString.prototype.getClosure = () => value;\n'closure';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Non-prototype property assignment', () => {
+		const code = `String.custom = function () {return 'custom';}; String.custom();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Non-function assignment to prototype', () => {
+		const code = `String.prototype.value = 'static'; 'test'.value;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Call to non-injected method', () => {
+		const code = `String.prototype.custom = function () {return 'custom';}; 'test'.other();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Assignment with non-assignment operator', () => {
+		const code = `String.prototype.test += function () {return 'test';}; 'hello'.test();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Complex expression assignment to prototype', () => {
+		const code = `String.prototype.complex = getValue() + 'suffix'; 'test'.complex();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Arrow function returning this (may not evaluate safely)', () => {
+		const code = `String.prototype.getThis = () => this; 'hello'.getThis();`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
