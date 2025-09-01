@@ -1366,9 +1366,99 @@ describe('SAFE: resolveProxyCalls', async () => {
 });
 describe('SAFE: resolveProxyReferences', async () => {
 	const targetModule = (await import('../src/modules/safe/resolveProxyReferences.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Replace proxy reference with direct reference', () => {
 		const code = `const a = ['']; const b = a; const c = b[0];`;
 		const expected = `const a = [''];\nconst b = a;\nconst c = a[0];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-2: Replace multiple proxy references to same target', () => {
+		const code = `const arr = [1, 2, 3]; const proxy = arr; const x = proxy[0]; const y = proxy[1];`;
+		const expected = `const arr = [\n  1,\n  2,\n  3\n];\nconst proxy = arr;\nconst x = arr[0];\nconst y = arr[1];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-3: Replace member expression proxy references', () => {
+		const code = `const obj = {prop: 42}; const alias = obj.prop; const result = alias;`;
+		const expected = `const obj = { prop: 42 };\nconst alias = obj.prop;\nconst result = obj.prop;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Replace chained proxy references', () => {
+		const code = `const original = 'test'; const proxy1 = original; const proxy2 = proxy1; const final = proxy2;`;
+		const expected = `const original = 'test';\nconst proxy1 = original;\nconst proxy2 = original;\nconst final = proxy1;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Replace variable with let declaration', () => {
+		const code = `let source = 'value'; let reference = source; console.log(reference);`;
+		const expected = `let source = 'value';\nlet reference = source;\nconsole.log(source);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Replace variable with var declaration', () => {
+		const code = `var base = [1, 2]; var link = base; var item = link[0];`;
+		const expected = `var base = [\n  1,\n  2\n];\nvar link = base;\nvar item = base[0];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not replace proxy in for-in statement', () => {
+		const code = `const obj = {a: 1}; for (const key in obj) { const proxy = key; }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not replace proxy in for-of statement', () => {
+		const code = `const arr = [1, 2]; for (const item of arr) { const proxy = item; }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not replace proxy in for statement', () => {
+		const code = `const arr = [1, 2]; for (let i = 0; i < arr.length; i++) { const proxy = arr[i]; }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not replace circular references', () => {
+		const code = `let a; let b; a = b; b = a;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not replace self-referencing variables', () => {
+		const code = `const a = someFunction(a);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not replace when proxy is modified', () => {
+		const code = `const original = [1]; const proxy = original; proxy.push(2);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not replace when target is modified', () => {
+		const code = `let original = [1]; const proxy = original; original = [2];`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-8: Do not replace when proxy has no references', () => {
+		const code = `const original = 'test'; const unused = original;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-9: Do not replace non-identifier/non-member expression variables', () => {
+		const code = `const a = func(); const b = a;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Replace when target comes from function call (still safe)', () => {
+		const code = `const a = getValue(); const b = a; console.log(b);`;
+		const expected = `const a = getValue();\nconst b = a;\nconsole.log(a);`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
