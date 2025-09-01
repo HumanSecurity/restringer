@@ -94,10 +94,82 @@ describe('UNSAFE: normalizeRedundantNotOperator', async () => {
 	});
 });
 describe('UNSAFE: resolveAugmentedFunctionWrappedArrayReplacements', async () => {
-	// Load the module even though there are no tests for it - to include it in the coverage report
-	// noinspection JSUnusedLocalSymbols
 	const targetModule = (await import('../src/modules/unsafe/resolveAugmentedFunctionWrappedArrayReplacements.js')).default;
-	it.todo('TODO: Write tests for function', () => {});
+	
+	it.todo('Add Missing True Positive Test Cases');
+	
+	it('TN-1: Do not transform functions without augmentation', () => {
+		const code = `function simpleFunc() { return 'test'; }
+		simpleFunc();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-2: Do not transform functions without array operations', () => {
+		const code = `function myFunc() { myFunc = 'modified'; return 'value'; }
+		myFunc();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-3: Do not transform when no matching expression statements', () => {
+		const code = `var arr = ['a', 'b'];
+		function decrypt(i) { return arr[i]; }
+		decrypt.modified = true;
+		decrypt(0);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-4: Do not transform anonymous functions', () => {
+		const code = `var func = function() { func = 'modified'; return arr[0]; };
+		func();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-5: Do not transform when array candidate has no declNode', () => {
+		const code = `function decrypt() { 
+			decrypt = 'modified'; 
+			return undeclaredArr[0]; 
+		}
+		decrypt();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-6: Do not transform when expression statement pattern is wrong', () => {
+		const code = `var arr = ['a', 'b'];
+		function decrypt(i) { 
+			decrypt = 'modified'; 
+			return arr[i]; 
+		}
+		(function() { return arr; })(); // Wrong pattern - not matching
+		decrypt(0);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	
+	it('TN-7: Do not transform when no replacement candidates found', () => {
+		const code = `var arr = ['a', 'b'];
+		function decrypt(i) { 
+			decrypt = 'modified'; 
+			return arr[i]; 
+		}
+		(function(arr) { return arr; })(arr);
+		// No calls to decrypt function to replace
+		console.log('test');`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+
 });
 describe('UNSAFE: resolveBuiltinCalls', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveBuiltinCalls.js')).default;
