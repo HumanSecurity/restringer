@@ -1633,6 +1633,78 @@ describe('SAFE: unwrapFunctionShells', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-3: Unwrap function expression assigned to variable', () => {
+		const code = `const outer = function(param) { return function inner() { return param * 2; }.apply(this, arguments); };`;
+		const expected = `const outer = function inner(param) {\n  return param * 2;\n};`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-4: Inner function already has parameters', () => {
+		const code = `function wrapper() { return function inner(existing) { return existing + 1; }.apply(this, arguments); }`;
+		const expected = `function inner(existing) {\n  return existing + 1;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-5: Outer function has multiple parameters', () => {
+		const code = `function multi(a, b, c) { return function() { return a + b + c; }.apply(this, arguments); }`;
+		const expected = `function multi(a, b, c) {\n  return a + b + c;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Complex inner function body', () => {
+		const code = `function complex(x) { return function process() { const temp = x * 2; return temp + 1; }.apply(this, arguments); }`;
+		const expected = `function process(x) {\n  const temp = x * 2;\n  return temp + 1;\n}`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Do not unwrap function with multiple statements', () => {
+		const code = `function multi() { console.log('test'); return function() { return 42; }.apply(this, arguments); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not unwrap function with no return statement', () => {
+		const code = `function noReturn() { console.log('no return'); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not unwrap function returning .call instead of .apply', () => {
+		const code = `function useCall(x) { return function() { return x + 1; }.call(this, x); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not unwrap .apply with wrong argument count', () => {
+		const code = `function wrongArgs(x) { return function() { return x; }.apply(this); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not unwrap when callee object is not FunctionExpression', () => {
+		const code = `function notFunc(x) { return someFunc.apply(this, arguments); }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Do not unwrap function returning non-call expression', () => {
+		const code = `function nonCall(x) { return x + 1; }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-7: Do not unwrap function with empty body', () => {
+		const code = `function empty() {}`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-8: Do not unwrap function with BlockStatement but no statements', () => {
+		const code = `function emptyBlock() { }`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: unwrapIIFEs', async () => {
 	const targetModule = (await import('../src/modules/safe/unwrapIIFEs.js')).default;
