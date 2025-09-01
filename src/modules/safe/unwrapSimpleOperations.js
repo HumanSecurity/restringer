@@ -1,14 +1,18 @@
-const operators = ['+', '-', '*', '/', '%', '&', '|', '&&', '||', '**', '^', '<=', '>=', '<', '>', '==', '===', '!=',
+const BINARY_OPERATORS = ['+', '-', '*', '/', '%', '&', '|', '&&', '||', '**', '^', '<=', '>=', '<', '>', '==', '===', '!=',
 	'!==', '<<', '>>', '>>>', 'in', 'instanceof', '??'];
-const fixes = ['!', '~', '-', '+', 'typeof', 'void', 'delete', '--', '++']; // as in prefix and postfix operators
+const UNARY_OPERATORS = ['!', '~', '-', '+', 'typeof', 'void', 'delete', '--', '++'];
+const BINARY_EXPRESSION_TYPES = ['LogicalExpression', 'BinaryExpression'];
+const UNARY_EXPRESSION_TYPES = ['UnaryExpression', 'UpdateExpression'];
 
 /**
- * @param {ASTNode} n
- * @return {boolean}
+ * Determines if a node is a simple binary or logical operation within a function wrapper.
+ * 
+ * @param {ASTNode} n - The expression node to check
+ * @return {boolean} True if the node is a binary/logical operation in a simple function wrapper
  */
-function matchBinaryOrLogical(n) {
-	return ['LogicalExpression', 'BinaryExpression'].includes(n.type) &&
-		operators.includes(n.operator) &&
+function isBinaryOrLogicalWrapper(n) {
+	return BINARY_EXPRESSION_TYPES.includes(n.type) &&
+		BINARY_OPERATORS.includes(n.operator) &&
 		n.parentNode.type === 'ReturnStatement' &&
 		n.parentNode.parentNode?.body?.length === 1 &&
 		n.left?.declNode?.parentKey === 'params' &&
@@ -16,78 +20,147 @@ function matchBinaryOrLogical(n) {
 }
 
 /**
- * @param {ASTNode} c
- * @param {Arborist} arb
+ * Determines if a node is a simple unary or update operation within a function wrapper.
+ * 
+ * @param {ASTNode} n - The expression node to check
+ * @return {boolean} True if the node is a unary/update operation in a simple function wrapper
  */
-function handleBinaryOrLogical(c, arb) {
-	const refs = (c.scope.block?.id?.references || []).map(r => r.parentNode);
-	for (const ref of refs) {
-		if (ref.type === 'CallExpression' && ref.arguments.length === 2) arb.markNode(ref, {
-			type: c.type,
-			operator: c.operator,
-			left: ref.arguments[0],
-			right: ref.arguments[1],
-		});
-	}
-}
-
-/**
- * @param {ASTNode} n
- * @return {boolean}
- */
-function matchUnaryOrUpdate(n) {
-	return ['UnaryExpression', 'UpdateExpression'].includes(n.type) &&
-		fixes.includes(n.operator) &&
+function isUnaryOrUpdateWrapper(n) {
+	return UNARY_EXPRESSION_TYPES.includes(n.type) &&
+		UNARY_OPERATORS.includes(n.operator) &&
 		n.parentNode.type === 'ReturnStatement' &&
 		n.parentNode.parentNode?.body?.length === 1 &&
 		n.argument?.declNode?.parentKey === 'params';
 }
 
 /**
- * @param {ASTNode} c
- * @param {Arborist} arb
+ * Creates a binary or logical expression node from the original operation.
+ * 
+ * @param {ASTNode} operationNode - The original binary/logical expression node
+ * @param {ASTNode[]} args - The function call arguments to use as operands
+ * @return {ASTNode} New binary or logical expression node
  */
-function handleUnaryAndUpdate(c, arb) {
-	const refs = (c.scope.block?.id?.references || []).map(r => r.parentNode);
-	for (const ref of refs) {
-		if (ref.type === 'CallExpression' && ref.arguments.length === 1) arb.markNode(ref, {
-			type: c.type,
-			operator: c.operator,
-			prefix: c.prefix,
-			argument: ref.arguments[0],
-		});
-	}
+function createBinaryOrLogicalExpression(operationNode, args) {
+	return {
+		type: operationNode.type,
+		operator: operationNode.operator,
+		left: args[0],
+		right: args[1],
+	};
 }
 
 /**
- * Replace calls to functions that wrap simple operations with the actual operations
- * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
- * @return {Arborist}
+ * Creates a unary or update expression node from the original operation.
+ * 
+ * @param {ASTNode} operationNode - The original unary/update expression node
+ * @param {ASTNode[]} args - The function call arguments to use as operands
+ * @return {ASTNode} New unary or update expression node
  */
-function unwrapSimpleOperations(arb, candidateFilter = () => true) {
-	const relevantNodes = [
-		...(arb.ast[0].typeMap.BinaryExpression || []),
-		...(arb.ast[0].typeMap.LogicalExpression || []),
-		...(arb.ast[0].typeMap.UnaryExpression || []),
-		...(arb.ast[0].typeMap.UpdateExpression || []),
-	];
+function createUnaryOrUpdateExpression(operationNode, args) {
+	return {
+		type: operationNode.type,
+		operator: operationNode.operator,
+		prefix: operationNode.prefix,
+		argument: args[0],
+	};
+}
+
+/**
+ * Finds nodes representing simple operations wrapped in functions.
+ * 
+ * Identifies operation expressions (binary, logical, unary, update) that are:
+ * - Single statements in function return statements
+ * - Use function parameters as operands
+ * - Can be safely unwrapped to direct operation calls
+ * 
+ * @param {Arborist} arb - The Arborist instance containing the AST
+ * @param {Function} candidateFilter - Filter function to apply to candidates
+ * @return {ASTNode[]} Array of operation nodes that can be unwrapped
+ */
+export function unwrapSimpleOperationsMatch(arb, candidateFilter = () => true) {
+	const relevantNodes = arb.ast[0].typeMap.BinaryExpression
+		.concat(arb.ast[0].typeMap.LogicalExpression)
+		.concat(arb.ast[0].typeMap.UnaryExpression)
+		.concat(arb.ast[0].typeMap.UpdateExpression);
+	
+	const matches = [];
+	
 	for (let i = 0; i < relevantNodes.length; i++) {
 		const n = relevantNodes[i];
-		if ((matchBinaryOrLogical(n) || matchUnaryOrUpdate(n)) && candidateFilter(n)) {
-			switch (n.type) {
-				case 'BinaryExpression':
-				case 'LogicalExpression':
-					handleBinaryOrLogical(n, arb);
-					break;
-				case 'UnaryExpression':
-				case 'UpdateExpression':
-					handleUnaryAndUpdate(n, arb);
-					break;
+		
+		if ((isBinaryOrLogicalWrapper(n) || isUnaryOrUpdateWrapper(n)) && candidateFilter(n)) {
+			matches.push(n);
+		}
+	}
+	
+	return matches;
+}
+
+/**
+ * Transforms a simple operation wrapper by replacing function calls with direct operations.
+ * 
+ * Replaces function calls that wrap simple operations with the actual operation.
+ * For example, `add(1, 2)` where `add` is `function add(a,b) { return a + b; }`
+ * becomes `1 + 2`.
+ * 
+ * @param {Arborist} arb - The Arborist instance to mark nodes for transformation
+ * @param {ASTNode} n - The operation expression node within the function wrapper
+ * @return {Arborist} The Arborist instance for chaining
+ */
+export function unwrapSimpleOperationsTransform(arb, n) {
+	const references = n.scope.block?.id?.references || [];
+	
+	for (let i = 0; i < references.length; i++) {
+		const ref = references[i];
+		const callExpression = ref.parentNode;
+		
+		if (callExpression.type === 'CallExpression') {
+			let replacementNode = null;
+			
+			if (BINARY_EXPRESSION_TYPES.includes(n.type) && callExpression.arguments.length === 2) {
+				replacementNode = createBinaryOrLogicalExpression(n, callExpression.arguments);
+			} else if (UNARY_EXPRESSION_TYPES.includes(n.type) && callExpression.arguments.length === 1) {
+				replacementNode = createUnaryOrUpdateExpression(n, callExpression.arguments);
+			}
+			
+			if (replacementNode) {
+				arb.markNode(callExpression, replacementNode);
 			}
 		}
 	}
+	
 	return arb;
 }
 
-export default unwrapSimpleOperations;
+/**
+ * Replace calls to functions that wrap simple operations with the actual operations.
+ * 
+ * This optimization identifies function wrappers around simple operations (binary, logical,
+ * unary, and update expressions) and replaces function calls with direct operations.
+ * This removes unnecessary function call overhead for basic operations.
+ * 
+ * Transforms:
+ * ```javascript
+ * function add(a, b) { return a + b; }
+ * add(1, 2);
+ * ```
+ * 
+ * Into:
+ * ```javascript
+ * function add(a, b) { return a + b; }
+ * 1 + 2;
+ * ```
+ * 
+ * @param {Arborist} arb - The Arborist instance containing the AST
+ * @param {Function} candidateFilter - Optional filter to apply to candidates
+ * @return {Arborist} The Arborist instance for chaining
+ */
+export default function unwrapSimpleOperations(arb, candidateFilter = () => true) {
+	const matches = unwrapSimpleOperationsMatch(arb, candidateFilter);
+	
+	for (let i = 0; i < matches.length; i++) {
+		arb = unwrapSimpleOperationsTransform(arb, matches[i]);
+	}
+	
+	return arb;
+}

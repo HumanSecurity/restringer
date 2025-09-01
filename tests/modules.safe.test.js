@@ -1980,6 +1980,46 @@ typeof 1;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TN-1: Do not unwrap function with multiple statements', () => {
+		const code = `function complexAdd(a, b) {
+			console.log('adding');
+			return a + b;
+		}
+		complexAdd(1, 2);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Do not unwrap function with wrong parameter count', () => {
+		const code = `function singleParam(a) { return a + 1; }
+		singleParam(5);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Do not unwrap operation not using parameters', () => {
+		const code = `function fixedAdd(a, b) { return 5 + 10; }
+		fixedAdd(1, 2);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Do not unwrap function with no return statement', () => {
+		const code = `function noReturn(a, b) { 
+			var result = a + b;
+		}
+		noReturn(1, 2);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: Do not unwrap unsupported operator', () => {
+		const code = `function assignmentOp(a, b) { return a = b; }
+		assignmentOp(x, 5);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 });
 describe('SAFE: separateChainedDeclarators', async () => {
 	const targetModule = (await import('../src/modules/safe/separateChainedDeclarators.js')).default;
