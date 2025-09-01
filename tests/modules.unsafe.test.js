@@ -584,9 +584,75 @@ describe('UNSAFE: resolveEvalCallsOnNonLiterals', async () => {
 });
 describe('UNSAFE: resolveFunctionToArray', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveFunctionToArray.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Simple function returning array', () => {
 		const code = `function a() {return [1];}\nconst b = a();`;
 		const expected = `function a() {\n  return [1];\n}\nconst b = [1];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-2: Function with multiple elements', () => {
+		const code = `function getArr() { return ['one', 'two', 'three']; }\nlet arr = getArr();`;
+		const expected = `function getArr() {\n  return [\n    'one',\n    'two',\n    'three'\n  ];\n}\nlet arr = [\n  'one',\n  'two',\n  'three'\n];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Arrow function returning array', () => {
+		const code = `const makeArray = () => [1, 2, 3];\nconst data = makeArray();`;
+		const expected = `const makeArray = () => [\n  1,\n  2,\n  3\n];\nconst data = [\n  1,\n  2,\n  3\n];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Function with parameters (ignored)', () => {
+		const code = `function createArray(x) { return [x, x + 1]; }\nconst nums = createArray();`;
+		const expected = `function createArray(x) {\n  return [\n    x,\n    x + 1\n  ];\n}\nconst nums = [\n  undefined,\n  NaN\n];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Multiple variables with array access only', () => {
+		const code = `function getColors() { return ['red', 'blue']; }\nconst colors = getColors();\nconst first = colors[0];`;
+		const expected = `function getColors() {\n  return [\n    'red',\n    'blue'\n  ];\n}\nconst colors = [\n  'red',\n  'blue'\n];\nconst first = colors[0];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Function call with non-array-access usage', () => {
+		const code = `function getValue() { return 'test'; }\nconst val = getValue();\nconsole.log(val);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Variable with empty references array (should transform)', () => {
+		const code = `function getArray() { return [1, 2]; }\nconst unused = getArray();`;
+		const expected = `function getArray() {\n  return [\n    1,\n    2\n  ];\n}\nconst unused = [\n  1,\n  2\n];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Variable not assigned function call', () => {
+		const code = `const arr = [1, 2, 3];\nconsole.log(arr[0]);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Mixed usage (array access and other)', () => {
+		const code = `function getData() { return [1, 2]; }\nconst data = getData();\nconsole.log(data[0], data);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-7: Function with property access (length is MemberExpression)', () => {
+		const code = `function getArray() { return [1, 2, 3]; }\nconst arr = getArray();\nconst len = arr.length;`;
+		const expected = `function getArray() {\n  return [\n    1,\n    2,\n    3\n  ];\n}\nconst arr = [\n  1,\n  2,\n  3\n];\nconst len = arr.length;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Function with method calls (not just property access)', () => {
+		const code = `function getArray() { return [1, 2, 3]; }\nconst arr = getArray();\narr.push(4);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Non-literal init expression', () => {
+		const code = `const arr = someFunction();\nconsole.log(arr[0]);`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
