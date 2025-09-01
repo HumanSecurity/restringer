@@ -1895,10 +1895,64 @@ describe('SAFE: separateChainedDeclarators', async () => {
 		const result = applyModuleToCode(code, targetModule, true);
 		assert.strictEqual(result, expected);
 	});
-	it('TN-1L Variable declarators are not chained', () => {
+	it('TP-5: Mixed initialization patterns', () => {
+		const code = `var a, b = 2, c;`;
+		const expected = `var a;\nvar b = 2;\nvar c;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-6: Mixed declaration types with complex expressions', () => {
+		const code = `const x = func(), y = [1, 2, 3], z = {prop: 'value'};`;
+		const expected = `const x = func();\nconst y = [\n  1,\n  2,\n  3\n];\nconst z = { prop: 'value' };`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-7: Three or more declarations', () => {
+		const code = `let a = 1, b = 2, c = 3, d = 4, e = 5;`;
+		const expected = `let a = 1;\nlet b = 2;\nlet c = 3;\nlet d = 4;\nlet e = 5;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TP-8: Declarations in function scope', () => {
+		const code = `function test() { const x = 1, y = 2; return x + y; }`;
+		const expected = `function test() {\n  const x = 1;\n  const y = 2;\n  return x + y;\n}`;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-1: Variable declarators are not chained in for statement', () => {
 		const code = `for (let i, b = 2, c = 3;;);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-2: Variable declarators are not chained in for-in statement', () => {
+		const code = `for (let a, b in obj);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-3: Variable declarators are not chained in for-of statement', () => {
+		const code = `for (let a, b of arr);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-4: Single declarator should not be transformed', () => {
+		const code = `const singleVar = 42;`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-5: ForAwaitStatement declarations should be preserved', () => {
+		const code = `for await (let a, b of asyncIterable);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule, true);
+		assert.strictEqual(result, expected);
+	});
+	it('TN-6: Destructuring patterns should not be separated', () => {
+		const code = `const {a, b} = obj, c = 3;`;
+		const expected = `const {a, b} = obj;\nconst c = 3;`;
+		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
 });
