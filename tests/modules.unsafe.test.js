@@ -61,9 +61,9 @@ describe('UNSAFE: normalizeRedundantNotOperator', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-5: Do not normalize complex literals that cannot be safely evaluated', () => {
-		const code = `!Infinity || !-Infinity || !undefined || ![1,2,3] || !{a:1}`;
-		const expected = code;
+	it('TP-7: Normalize complex literals that can be safely evaluated', () => {
+		const code = `!undefined || ![1,2,3] || !{a:1}`;
+		const expected = `true || false || false;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
@@ -87,6 +87,12 @@ describe('UNSAFE: normalizeRedundantNotOperator', async () => {
 	});
 	it('TN-4: Do not normalize NOT on computed properties', () => {
 		const code = `!obj[key] || !arr[0] || !matrix[i][j]`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Do not normalize literals with unpredictable values', () => {
+		const code = `!Infinity || !-Infinity`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);

@@ -1,9 +1,48 @@
 import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
-import {canUnaryExpressionBeResolved} from '../utils/canUnaryExpressionBeResolved.js';
 
-const RESOLVABLE_ARGUMENT_TYPES = ['Literal', 'ArrayExpression', 'ObjectExpression', 'UnaryExpression'];
+const RESOLVABLE_ARGUMENT_TYPES = ['Literal', 'ArrayExpression', 'ObjectExpression', 'Identifier', 'TemplateLiteral', 'UnaryExpression'];
+
+/**
+ * Determines if a NOT operator's argument can be safely resolved to a boolean value.
+ * All supported argument types (literals, arrays, objects, template literals, identifiers)
+ * can be evaluated to determine their truthiness without side effects.
+ * @param {ASTNode} argument - The argument node of the NOT operator to check
+ * @return {boolean} True if the argument can be resolved independently, false otherwise
+ */
+function canNotOperatorArgumentBeResolved(argument) {
+	switch (argument.type) {
+		case 'Literal':
+			return true; // All literals: !true, !"hello", !42, !null
+			
+		case 'ArrayExpression':
+			// All arrays evaluate to truthy (even empty ones), so all are resolvable
+			// E.g. ![] -> false, ![1, 2, 3] -> false
+			return true;
+			
+		case 'ObjectExpression':
+			// All objects evaluate to truthy (even empty ones), so all are resolvable
+			// E.g. !{} -> false, !{a: 1} -> false
+			return true;
+			
+		case 'Identifier':
+			// Only the undefined identifier has predictable truthiness
+			return argument.name === 'undefined';
+			
+		case 'TemplateLiteral':
+			// Template literals with no dynamic expressions can be evaluated
+			// E.g. !`hello` -> false, !`` -> true, but not !`hello ${variable}`
+			return !argument.expressions.length;
+			
+		case 'UnaryExpression':
+			// Nested unary expressions: !!true, +!false, etc.
+			return canNotOperatorArgumentBeResolved(argument.argument);
+	}
+	
+	// Conservative approach: other expression types require runtime evaluation
+	return false;
+}
 
 /**
  * Finds UnaryExpression nodes with redundant NOT operators that can be normalized.
@@ -28,7 +67,7 @@ export function normalizeRedundantNotOperatorMatch(arb, candidateFilter = () => 
 		
 		if (n.operator === '!' &&
 			RESOLVABLE_ARGUMENT_TYPES.includes(n.argument.type) &&
-			canUnaryExpressionBeResolved(n.argument) &&
+			canNotOperatorArgumentBeResolved(n.argument) &&
 			candidateFilter(n)) {
 			matches.push(n);
 		}
@@ -86,15 +125,11 @@ export function normalizeRedundantNotOperatorTransform(arb, n, sharedSandbox) {
 export default function normalizeRedundantNotOperator(arb, candidateFilter = () => true) {
 	const matches = normalizeRedundantNotOperatorMatch(arb, candidateFilter);
 	
-	if (matches.length === 0) {
-		return arb;
+	if (matches.length) {
+		let sharedSandbox = new Sandbox();
+		for (let i = 0; i < matches.length; i++) {
+			arb = normalizeRedundantNotOperatorTransform(arb, matches[i], sharedSandbox);
+		}
 	}
-	
-	let sharedSandbox = new Sandbox();
-	
-	for (let i = 0; i < matches.length; i++) {
-		arb = normalizeRedundantNotOperatorTransform(arb, matches[i], sharedSandbox);
-	}
-	
 	return arb;
 }
