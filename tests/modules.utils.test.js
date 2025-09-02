@@ -1077,6 +1077,73 @@ describe('UTILS: getMainDeclaredObjectOfMemberExpression', async () => {
 		assert.deepStrictEqual(result, targetNode);
 	});
 });
+describe('UTILS: getObjType', async () => {
+	const targetModule = (await import('../src/modules/utils/getObjType.js')).getObjType;
+	it('TP-1: Detect Array type', () => {
+		const result = targetModule([1, 2, 3]);
+		assert.strictEqual(result, 'Array');
+	});
+	it('TP-2: Detect Object type', () => {
+		const result = targetModule({key: 'value'});
+		assert.strictEqual(result, 'Object');
+	});
+	it('TP-3: Detect String type', () => {
+		const result = targetModule('hello');
+		assert.strictEqual(result, 'String');
+	});
+	it('TP-4: Detect Number type', () => {
+		const result = targetModule(42);
+		assert.strictEqual(result, 'Number');
+	});
+	it('TP-5: Detect Boolean type', () => {
+		const result = targetModule(true);
+		assert.strictEqual(result, 'Boolean');
+	});
+	it('TP-6: Detect Null type', () => {
+		const result = targetModule(null);
+		assert.strictEqual(result, 'Null');
+	});
+	it('TP-7: Detect Undefined type', () => {
+		const result = targetModule(undefined);
+		assert.strictEqual(result, 'Undefined');
+	});
+	it('TP-8: Detect Date type', () => {
+		const result = targetModule(new Date());
+		assert.strictEqual(result, 'Date');
+	});
+	it('TP-9: Detect RegExp type', () => {
+		const result = targetModule(/pattern/);
+		assert.strictEqual(result, 'RegExp');
+	});
+	it('TP-10: Detect Function type', () => {
+		const result = targetModule(function() {});
+		assert.strictEqual(result, 'Function');
+	});
+	it('TP-11: Detect Arrow Function type', () => {
+		const result = targetModule(() => {});
+		assert.strictEqual(result, 'Function');
+	});
+	it('TP-12: Detect Error type', () => {
+		const result = targetModule(new Error('test'));
+		assert.strictEqual(result, 'Error');
+	});
+	it('TP-13: Detect empty array', () => {
+		const result = targetModule([]);
+		assert.strictEqual(result, 'Array');
+	});
+	it('TP-14: Detect empty object', () => {
+		const result = targetModule({});
+		assert.strictEqual(result, 'Object');
+	});
+	it('TP-15: Detect Symbol type', () => {
+		const result = targetModule(Symbol('test'));
+		assert.strictEqual(result, 'Symbol');
+	});
+	it('TP-16: Detect BigInt type', () => {
+		const result = targetModule(BigInt(123));
+		assert.strictEqual(result, 'BigInt');
+	});
+});
 describe('UTILS: isNodeInRanges', async () => {
 	const targetModule = (await import('../src/modules/utils/isNodeInRanges.js')).isNodeInRanges;
 	it('TP-1: In range', () => {
