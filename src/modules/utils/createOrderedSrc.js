@@ -1,71 +1,125 @@
 import {parseCode} from 'flast';
 
-const largeNumber = 999e8;
-const sortByNodeId = (a, b) => a.nodeId > b.nodeId ? 1 : b.nodeId > a.nodeId ? -1 : 0;
-const funcStartRegexp = new RegExp('function[^(]*');
+// Large number used to push IIFE nodes to the end when preserveOrder is false
+const LARGE_NUMBER = 999e8;
+const FUNC_START_REGEXP = /function[^(]*/;
+const TYPES_REQUIRING_SEMICOLON = ['VariableDeclarator', 'AssignmentExpression'];
 
 /**
- * Add a name to a FunctionExpression.
- * @param {ASTNode} n The target node
- * @param {string} [name] The new name. Defaults to 'func + n.nodeId'.
- * @return {ASTNode} The new node with the name set
+ * Comparison function for sorting nodes by their nodeId.
+ * @param {ASTNode} a - First node to compare
+ * @param {ASTNode} b - Second node to compare 
+ * @return {number} -1 if a comes before b, 1 if b comes before a, 0 if equal
+ */
+const sortByNodeId = (a, b) => a.nodeId > b.nodeId ? 1 : b.nodeId > a.nodeId ? -1 : 0;
+
+/**
+ * Adds a name to an anonymous FunctionExpression by parsing modified source code.
+ * This is necessary for creating standalone function declarations from anonymous functions.
+ * @param {ASTNode} n - The FunctionExpression node to add a name to
+ * @param {string} [name] - The new name. Defaults to 'func + n.nodeId'
+ * @return {ASTNode|null} The new named function node, or null if parsing fails
  */
 function addNameToFE(n, name) {
 	name = name || 'func' + n.nodeId;
-	const funcSrc = '(' + n.src.replace(funcStartRegexp, 'function ' + name) + ');';
-	const newNode = parseCode(funcSrc);
-	if (newNode) {
-		newNode.nodeId = n.nodeId;
-		newNode.src = funcSrc;
-		return newNode;
+	const funcSrc = '(' + n.src.replace(FUNC_START_REGEXP, 'function ' + name) + ');';
+	try {
+		const newNode = parseCode(funcSrc);
+		if (newNode) {
+			newNode.nodeId = n.nodeId;
+			newNode.src = funcSrc;
+			return newNode;
+		}
+	} catch (e) {
+		// Return null if parsing fails rather than undefined
+		return null;
 	}
+	return null;
 }
 
 /**
- * Return the source code of the ordered nodes.
- * @param {ASTNode[]} nodes
- * @param {boolean} preserveOrder (optional) When false, IIFEs are pushed to the end of the code.
- * @return {string} Combined source code of the nodes.
+ * Creates ordered source code from AST nodes, handling special cases for IIFEs and function expressions.
+ * When preserveOrder is false, IIFEs are moved to the end to ensure proper execution order.
+ * This is critical for deobfuscation where dependencies must be resolved before usage.
+ * 
+ * @param {ASTNode[]} nodes - Array of AST nodes to convert to source code
+ * @param {boolean} [preserveOrder=false] - When false, IIFEs are pushed to the end of the code
+ * @return {string} Combined source code of the nodes in proper execution order
+ * 
+ * @example
+ * // Without preserveOrder: IIFEs moved to end
+ * const nodes = [iifeNode, regularCallNode];
+ * createOrderedSrc(nodes); // → "regularCall();\n(function(){})();\n"
+ * 
+ * // With preserveOrder: original order preserved  
+ * createOrderedSrc(nodes, true); // → "(function(){})();\nregularCall();\n"
  */
-function createOrderedSrc(nodes, preserveOrder = false) {
-	const parsedNodes = [];
-	for (let i = 0; i < nodes.length; i++)  {
-		let n = nodes[i];
-		if (n.type === 'CallExpression') {
-			if (n.parentNode.type === 'ExpressionStatement') {
-				nodes[i] = n.parentNode;
-				if (!preserveOrder && n.callee.type === 'FunctionExpression') {
-					// Set nodeId to place IIFE just after its argument's declaration
+export function createOrderedSrc(nodes, preserveOrder = false) {
+	const seenNodes = new Set();
+	const processedNodes = [];
+	
+	for (let i = 0; i < nodes.length; i++) {
+		let currentNode = nodes[i];
+		
+		// Handle CallExpression nodes
+		if (currentNode.type === 'CallExpression') {
+			if (currentNode.parentNode.type === 'ExpressionStatement') {
+				// Use the ExpressionStatement wrapper instead of the bare CallExpression
+				currentNode = currentNode.parentNode;
+				nodes[i] = currentNode;
+				
+				// IIFE reordering: place after argument dependencies when preserveOrder is false
+				if (!preserveOrder && nodes[i].expression.callee.type === 'FunctionExpression') {
 					let maxArgNodeId = 0;
-					for (let j = 0; j < n.arguments.length; j++) {
-						const arg = n.arguments[j];
+					for (let j = 0; j < nodes[i].expression.arguments.length; j++) {
+						const arg = nodes[i].expression.arguments[j];
 						if (arg?.declNode?.nodeId > maxArgNodeId) {
 							maxArgNodeId = arg.declNode.nodeId;
 						}
 					}
-					nodes[i].nodeId = maxArgNodeId ? maxArgNodeId + 1 : nodes[i].nodeId + largeNumber;
+					// Place IIFE after latest argument dependency, or at end if no dependencies
+					currentNode.nodeId = maxArgNodeId ? maxArgNodeId + 1 : currentNode.nodeId + LARGE_NUMBER;
 				}
-			} else if (n.callee.type === 'FunctionExpression') {
+			} else if (nodes[i].callee.type === 'FunctionExpression') {
+				// Standalone function expression calls (not in ExpressionStatement)
 				if (!preserveOrder) {
-					const newNode = addNameToFE(n, n.parentNode?.id?.name);
-					newNode.nodeId = newNode.nodeId + largeNumber;
-					nodes[i] = newNode;
-				} else nodes[i] = n;
+					const namedFunc = addNameToFE(nodes[i], nodes[i].parentNode?.id?.name);
+					if (namedFunc) {
+						namedFunc.nodeId = namedFunc.nodeId + LARGE_NUMBER;
+						currentNode = namedFunc;
+						nodes[i] = currentNode;
+					}
+				}
+				// When preserveOrder is true, keep the original node unchanged
 			}
-		} else if (n.type === 'FunctionExpression' && !n.id) {
-			nodes[i] = addNameToFE(n, n.parentNode?.id?.name);
+		} else if (currentNode.type === 'FunctionExpression' && !currentNode.id) {
+			// Anonymous function expressions need names for standalone declarations
+			const namedFunc = addNameToFE(currentNode, currentNode.parentNode?.id?.name);
+			if (namedFunc) {
+				currentNode = namedFunc;
+				nodes[i] = currentNode;
+			}
 		}
-		n = nodes[i];	// In case the node was replaced
-		if (!parsedNodes.includes(n)) parsedNodes.push(n);
+		
+		// Add to processed list if not already seen
+		if (!seenNodes.has(currentNode)) {
+			seenNodes.add(currentNode);
+			processedNodes.push(currentNode);
+		}
 	}
-	parsedNodes.sort(sortByNodeId);
+	
+	// Sort by nodeId to ensure proper execution order
+	processedNodes.sort(sortByNodeId);
+	
+	// Generate source code with proper formatting
 	let output = '';
-	for (let i = 0; i < parsedNodes.length; i++)  {
-		const n = parsedNodes[i];
-		const addSemicolon = ['VariableDeclarator', 'AssignmentExpression'].includes(n.type);
-		output += (n.type === 'VariableDeclarator' ? `${n.parentNode.kind} ` : '') + n.src + (addSemicolon ? ';' : '') + '\n';
+	for (let i = 0; i < processedNodes.length; i++) {
+		const n = processedNodes[i];
+		const needsSemicolon = TYPES_REQUIRING_SEMICOLON.includes(n.type);
+		const prefix = n.type === 'VariableDeclarator' ? `${n.parentNode.kind} ` : '';
+		const suffix = needsSemicolon ? ';' : '';
+		output += prefix + n.src + suffix + '\n';
 	}
+	
 	return output;
 }
-
-export {createOrderedSrc};

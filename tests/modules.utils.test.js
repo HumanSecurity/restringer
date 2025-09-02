@@ -372,6 +372,91 @@ describe('UTILS: createOrderedSrc', async () => {
 		const result = targetModule(targetNodes.map(n => ast[n]), true);
 		assert.deepStrictEqual(result, expected);
 	});
+	it('TP-8: Variable declarations with semicolons', () => {
+		const code = 'const a = 1; let b = 2;';
+		const expected = `const a = 1;\nlet b = 2;\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [
+			2, // a = 1
+			5, // b = 2
+		];
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-9: Assignment expressions with semicolons', () => {
+		const code = 'let a; a = 1; a = 2;';
+		const expected = `a = 1;\na = 2;\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [
+			8, // a = 2 (ExpressionStatement)
+			4, // a = 1 (ExpressionStatement)
+		];
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-10: Duplicate node elimination', () => {
+		const code = 'a(); b();';
+		const expected = `a();\nb();\n`;
+		const ast = generateFlatAST(code);
+		const duplicatedNodes = [
+			2, // a()
+			5, // b()
+			2, // a() again (duplicate)
+		];
+		const result = targetModule(duplicatedNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-11: IIFE dependency ordering with arguments', () => {
+		const code = 'const x = 1; (function(a){return a;})(x);';
+		const expected = `const x = 1;\n(function(a){return a;})(x);\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [
+			5, // (function(a){return a;})(x)
+			2, // x = 1
+		];
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Empty node array', () => {
+		const expected = '';
+		const result = targetModule([]);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Single node without reordering', () => {
+		const code = 'a();';
+		const expected = `a();\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [2]; // a()
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Non-CallExpression and non-FunctionExpression nodes', () => {
+		const code = 'const a = 1; const b = "hello";';
+		const expected = `const a = 1;\nconst b = "hello";\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [
+			5, // b = "hello"
+			2, // a = 1
+		];
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: CallExpression without ExpressionStatement parent', () => {
+		const code = 'const result = a();';
+		const expected = `const result = a();\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [2]; // result = a()
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Named function expressions (no renaming needed)', () => {
+		const code = 'const f = function named() {};';
+		const expected = `const f = function named() {};\n`;
+		const ast = generateFlatAST(code);
+		const targetNodes = [2]; // f = function named() {}
+		const result = targetModule(targetNodes.map(n => ast[n]));
+		assert.deepStrictEqual(result, expected);
+	});
 });
 describe('UTILS: doesBinaryExpressionContainOnlyLiterals', async () => {
 	const targetModule = (await import('../src/modules/utils/doesBinaryExpressionContainOnlyLiterals.js')).doesBinaryExpressionContainOnlyLiterals;
