@@ -265,6 +265,32 @@ describe('UTILS: createNewNode', async () => {
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
 	});
+	it('BigInt', () => {
+		const code = 123n;
+		const expected = {type: 'Literal', value: 123n, raw: '123n', bigint: '123'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('Symbol with description', () => {
+		const code = Symbol('test');
+		const expected = {
+			type: 'CallExpression',
+			callee: {type: 'Identifier', name: 'Symbol'},
+			arguments: [{type: 'Literal', value: 'test', raw: 'test'}]
+		};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('Symbol without description', () => {
+		const code = Symbol();
+		const expected = {
+			type: 'CallExpression',
+			callee: {type: 'Identifier', name: 'Symbol'},
+			arguments: []
+		};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
 
 });
 describe('UTILS: createOrderedSrc', async () => {

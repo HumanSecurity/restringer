@@ -3,113 +3,173 @@ import {getObjType} from './getObjType.js';
 import {generateCode, parseCode, logger} from 'flast';
 
 /**
- * Create a node from a value by its type.
- * @param {*} value The value to be parsed into an ASTNode.
- * @returns {ASTNode|BAD_VALUE} The newly created node if successful; BAD_VALUE string otherwise.
+ * Creates an AST node from a JavaScript value by analyzing its type and structure.
+ * Handles primitive types, arrays, objects, and special cases like negative zero,
+ * unary expressions, and AST nodes. Returns BAD_VALUE for unsupported types.
+ * @param {*} value - The JavaScript value to convert into an AST node
+ * @return {ASTNode|BAD_VALUE} The newly created AST node if successful; BAD_VALUE otherwise
  */
-function createNewNode(value) {
+export function createNewNode(value) {
 	let newNode = BAD_VALUE;
 	try {
-		if (![undefined, null].includes(value) && value.__proto__.constructor.name === 'Node') value = generateCode(value);
-		switch (getObjType(value)) {
-			case 'String':
-			case 'Number':
-			case 'Boolean':
-				if (['-', '+', '!'].includes(String(value)[0]) && String(value).length > 1) {
-					const absVal = String(value).substring(1);
-					if (Number.isNaN(parseInt(absVal)) && !['Infinity', 'NaN'].includes(absVal)) {
-						newNode = {
-							type: 'Literal',
-							value,
-							raw: String(value),
-						};
-					} else newNode = {
-						type: 'UnaryExpression',
-						operator: String(value)[0],
-						argument: createNewNode(absVal),
-					};
-				} else if (['Infinity', 'NaN'].includes(String(value))) {
-					newNode = {
-						type: 'Identifier',
-						name: String(value),
-					};
-				} else if (Object.is(value, -0)) {
-					newNode = {
-						type: 'UnaryExpression',
-						operator: '-',
-						argument: createNewNode(0),
-					};
-				} else {
+		const valueType = getObjType(value);
+		switch (valueType) {
+		case 'Node':
+			newNode = value;
+			break;
+		case 'String':
+		case 'Number':
+		case 'Boolean': {
+			const valueStr = String(value);
+			const firstChar = valueStr[0];
+			
+			// Handle unary expressions like -3, +5, !true (from string representations)  
+			if (['-', '+', '!'].includes(firstChar) && valueStr.length > 1) {
+				const absVal = valueStr.substring(1);
+				// Check if the remaining part is numeric (integers only to maintain original behavior)
+				if (isNaN(parseInt(absVal)) && !['Infinity', 'NaN'].includes(absVal)) {
+					// Non-numeric string like "!hello" - treat as literal
 					newNode = {
 						type: 'Literal',
-						value: value,
-						raw: String(value),
+						value,
+						raw: valueStr,
+					};
+				} else {
+					// Create unary expression maintaining string representation for consistency
+					newNode = {
+						type: 'UnaryExpression',
+						operator: firstChar,
+						argument: createNewNode(absVal),
 					};
 				}
-				break;
-			case 'Array': {
-				const elements = [];
-				for (const el of Array.from(value)) {
-					elements.push(createNewNode(el));
-				}
-				newNode = {
-					type: 'ArrayExpression',
-					elements,
-				};
-				break;
-			}
-			case 'Object': {
-				const properties = [];
-				for (const [k, v] of Object.entries(value)) {
-					const key = createNewNode(k);
-					const val = createNewNode(v);
-					if ([key, val].includes(BAD_VALUE)) {
-						// noinspection ExceptionCaughtLocallyJS
-						throw Error();
-					}
-					properties.push({
-						type: 'Property',
-						key,
-						value: val,
-					});
-				}
-				newNode = {
-					type: 'ObjectExpression',
-					properties,
-				};
-				break;
-			}
-			case 'Undefined':
+			} else if (['Infinity', 'NaN'].includes(valueStr)) {
+				// Special numeric identifiers
 				newNode = {
 					type: 'Identifier',
-					name: 'undefined',
+					name: valueStr,
 				};
-				break;
-			case 'Null':
+			} else if (Object.is(value, -0)) {
+				// Special case: negative zero requires unary expression
+				newNode = {
+					type: 'UnaryExpression',
+					operator: '-',
+					argument: createNewNode(0),
+				};
+			} else {
+				// Regular literal values
 				newNode = {
 					type: 'Literal',
-					raw: 'null',
+					value: value,
+					raw: valueStr,
 				};
-				break;
-			case 'Function': // Covers functions and classes
-				try {
-					newNode = parseCode(value).body[0];
-				} catch {}  // Probably a native function
-				break;
-			case 'RegExp':
+			}
+			break;
+		}
+		case 'Array': {
+			const elements = [];
+			// Direct iteration over array (value is already an array)
+			for (let i = 0; i < value.length; i++) {
+				const elementNode = createNewNode(value[i]);
+				if (elementNode === BAD_VALUE) {
+					// If any element fails to convert, fail the entire array
+					throw new Error('Array contains unconvertible element');
+				}
+				elements.push(elementNode);
+			}
+			newNode = {
+				type: 'ArrayExpression',
+				elements,
+			};
+			break;
+		}
+		case 'Object': {
+			const properties = [];
+			const entries = Object.entries(value);
+			
+			for (let i = 0; i < entries.length; i++) {
+				const [k, v] = entries[i];
+				const key = createNewNode(k);
+				const val = createNewNode(v);
+				
+				// If any property key or value fails to convert, fail the entire object
+				if (key === BAD_VALUE || val === BAD_VALUE) {
+					throw new Error('Object contains unconvertible property');
+				}
+				
+				properties.push({
+					type: 'Property',
+					key,
+					value: val,
+				});
+			}
+			newNode = {
+				type: 'ObjectExpression',
+				properties,
+			};
+			break;
+		}
+		case 'Undefined':
+			newNode = {
+				type: 'Identifier',
+				name: 'undefined',
+			};
+			break;
+		case 'Null':
+			newNode = {
+				type: 'Literal',
+				raw: 'null',
+			};
+			break;
+		case 'BigInt':
+			newNode = {
+				type: 'Literal',
+				value: value,
+				raw: value.toString() + 'n',
+				bigint: value.toString(),
+			};
+			break;
+		case 'Symbol':
+			// Symbols cannot be represented as literals in AST
+			// They must be created via Symbol() calls
+			const symbolDesc = value.description;
+			if (symbolDesc) {
 				newNode = {
-					type: 'Literal',
-					regex: {
-						pattern: value.source,
-						flags: value.flags,
-					},
+					type: 'CallExpression',
+					callee: {type: 'Identifier', name: 'Symbol'},
+					arguments: [createNewNode(symbolDesc)],
 				};
-				break;
+			} else {
+				newNode = {
+					type: 'CallExpression',
+					callee: {type: 'Identifier', name: 'Symbol'},
+					arguments: [],
+				};
+			}
+			break;
+		case 'Function': // Covers functions and classes
+			try {
+				// Attempt to parse function source code into AST
+				const parsed = parseCode(value.toString());
+				if (parsed?.body?.[0]) {
+					newNode = parsed.body[0];
+				}
+			} catch {
+				// Native functions or unparseable functions return BAD_VALUE
+				// This is expected behavior for built-in functions like Math.max
+			}
+			break;
+		case 'RegExp':
+			newNode = {
+				type: 'Literal',
+				regex: {
+					pattern: value.source,
+					flags: value.flags,
+				},
+			};
+			break;
 		}
 	} catch (e) {
 		logger.debug(`[-] Unable to create a new node: ${e}`);
 	}
 	return newNode;
 }
-
-export {createNewNode};
