@@ -25,9 +25,9 @@ const skipBuiltinFunctions = [
 ];
 
 // Identifiers that shouldn't be touched since they're either session-based or resolve inconsisstently.
-const skipIdentifiers = [
+const SKIP_IDENTIFIERS = [
 	'window', 'this', 'self', 'document', 'module', '$', 'jQuery', 'navigator', 'typeof', 'new', 'Date', 'Math',
-	'Promise', 'Error', 'fetch', 'XMLHttpRequest', 'performance',
+	'Promise', 'Error', 'fetch', 'XMLHttpRequest', 'performance', 'globalThis',
 ];
 
 // Properties that shouldn't be resolved since they're either based on context which can't be determined or resolve inconsistently.
@@ -46,7 +46,7 @@ export {
 	defaultMaxIterations,
 	propertiesThatModifyContent,
 	skipBuiltinFunctions,
-	skipIdentifiers,
+	SKIP_IDENTIFIERS,
 	skipProperties,
 	validIdentifierBeginning,
 };
