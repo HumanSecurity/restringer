@@ -730,40 +730,105 @@ describe('UTILS: getCache', async () => {
 });
 describe('UTILS: getCalleeName', async () => {
 	const targetModule = (await import('../src/modules/utils/getCalleeName.js')).getCalleeName;
-	it('TP-1: Simple call expression', () => {
-		const code = `a();`;
-		const expected = 'a';
+	it('TP-1: Simple identifier callee', () => {
+		const code = `func();`;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
-		assert.deepStrictEqual(result, expected);
+		assert.strictEqual(result, 'func');
 	});
-	it('TP-2: Member expression callee', () => {
-		const code = `a.b();`;
-		const expected = 'a';
+	it('TP-2: Member expression callee (single level)', () => {
+		const code = `obj.method();`;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
-		assert.deepStrictEqual(result, expected);
+		assert.strictEqual(result, 'obj');
 	});
 	it('TP-3: Nested member expression callee', () => {
-		const code = `a.b.c();`;
-		const expected = 'a';
+		const code = `obj.nested.method();`;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
-		assert.deepStrictEqual(result, expected);
+		assert.strictEqual(result, 'obj');
 	});
-	it('TP-4: Literal callee (string)', () => {
-		const code = `'a'.split('');`;
-		const expected = 'a';
+	it('TP-4: Deeply nested member expression', () => {
+		const code = `obj.a.b.c.d();`;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
-		assert.deepStrictEqual(result, expected);
+		assert.strictEqual(result, 'obj');
 	});
-	it('TP-5: Literal callee (number)', () => {
+	it('TP-5: Avoid counting collision between function and literal calls', () => {
+		// This test demonstrates the collision avoidance
+		const code = `function t1() { return 1; } t1(); 't1'.toString();`;
+		const ast = generateFlatAST(code);
+		const calls = ast.filter(n => n.type === 'CallExpression');
+		
+		const functionCall = calls[0]; // t1()
+		const literalMethodCall = calls[1]; // 't1'.toString()
+		
+		assert.strictEqual(targetModule(functionCall), 't1'); // Function call counted
+		assert.strictEqual(targetModule(literalMethodCall), ''); // Literal method not counted
+	});
+	it('TN-1: Literal string method calls return empty', () => {
+		const code = `'test'.split('');`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
+		assert.strictEqual(result, ''); // Don't count literal methods
+	});
+	it('TN-2: Literal number method calls return empty', () => {
 		const code = `1..toString();`;
-		const expected = 1;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
-		assert.deepStrictEqual(result, expected);
+		assert.strictEqual(result, ''); // Don't count literal methods
+	});
+	it('TN-3: ThisExpression method calls return empty', () => {
+		const code = `this.method();`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
+		assert.strictEqual(result, ''); // Don't count 'this' methods
+	});
+	it('TN-4: Boolean literal method calls return empty', () => {
+		const code = `true.valueOf();`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
+		assert.strictEqual(result, ''); // Don't count literal methods
+	});
+	it('TN-5: Logical expression callee returns empty', () => {
+		const code = `(func || fallback)();`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
+		assert.strictEqual(result, ''); // Don't count complex expressions
+	});
+	it('TN-6: CallExpression as base object returns empty', () => {
+		const code = `func()[0]();`;
+		const ast = generateFlatAST(code);
+		const outerCall = ast.filter(n => n.type === 'CallExpression')[0]; // First = outer call func()[0]()
+		const result = targetModule(outerCall);
+		assert.strictEqual(result, ''); // Don't count chained calls
+	});
+	it('TN-7: Null/undefined input handling', () => {
+		const result1 = targetModule(null);
+		const result2 = targetModule(undefined);
+		const result3 = targetModule({});
+		const result4 = targetModule({callee: null});
+		assert.strictEqual(result1, '');
+		assert.strictEqual(result2, '');
+		assert.strictEqual(result3, '');
+		assert.strictEqual(result4, '');
+	});
+	it('TN-8: Computed member expression with identifier', () => {
+		const code = `obj[key]();`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast.find(n => n.type === 'CallExpression'));
+		assert.strictEqual(result, 'obj'); // Variable method call, return base variable
+	});
+	it('TN-9: Complex callee without name returns empty', () => {
+		// Create mock node with no name/value
+		const mockCall = {
+			callee: {
+				type: 'SomeComplexExpression',
+				// No name, value, or object properties
+			}
+		};
+		const result = targetModule(mockCall);
+		assert.strictEqual(result, ''); // Complex expressions return empty
 	});
 });
 describe('UTILS: getDeclarationWithContext', async () => {
