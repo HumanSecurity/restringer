@@ -31,7 +31,7 @@ const SKIP_IDENTIFIERS = [
 ];
 
 // Properties that shouldn't be resolved since they're either based on context which can't be determined or resolve inconsistently.
-const skipProperties = [
+const SKIP_PROPERTIES = [
 	'test', 'exec', 'match', 'length', 'freeze', 'call', 'apply', 'create', 'getTime', 'now',
 	'getMilliseconds', ...propertiesThatModifyContent,
 ];
@@ -47,6 +47,6 @@ export {
 	propertiesThatModifyContent,
 	skipBuiltinFunctions,
 	SKIP_IDENTIFIERS,
-	skipProperties,
+	SKIP_PROPERTIES,
 	validIdentifierBeginning,
 };

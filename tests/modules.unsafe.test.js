@@ -870,3 +870,68 @@ describe('UNSAFE: resolveMinimalAlphabet', async () => {
 		assert.deepStrictEqual(result, expected);
 	});
 });
+
+describe('resolveMemberExpressionsLocalReferences (resolveMemberExpressionsLocalReferences.js)', async () => {
+	const targetModule = (await import('../src/modules/unsafe/resolveMemberExpressionsLocalReferences.js')).default;
+	it('TP-1: Array index access with literal', () => {
+		const code = `const a = [1, 2, 3]; const b = a[1];`;
+		const expected = `const a = [\n  1,\n  2,\n  3\n];\nconst b = 2;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-2: Object property access with dot notation', () => {
+		const code = `const obj = {hello: 'world'}; const val = obj.hello;`;
+		const expected = `const obj = { hello: 'world' };\nconst val = 'world';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Object property access with string literal', () => {
+		const code = `const obj = {hello: 'world'}; const val = obj['hello'];`;
+		const expected = `const obj = { hello: 'world' };\nconst val = 'world';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Constructor property access', () => {
+		const code = `const obj = {constructor: 'test'}; const val = obj.constructor;`;
+		const expected = `const obj = { constructor: 'test' };\nconst val = 'test';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Object computed property with identifier variable', () => {
+		const code = `const obj = {key: 'value'}; const prop = 'key'; const val = obj[prop];`;
+		const expected = `const obj = {key: 'value'}; const prop = 'key'; const val = obj[prop];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Array index with identifier variable', () => {
+		const code = `const a = [10, 20, 30]; const idx = 0; const b = a[idx];`;
+		const expected = `const a = [10, 20, 30]; const idx = 0; const b = a[idx];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Function parameter reference', () => {
+		const code = `function test(param) { const arr = [1, 2, 3]; return arr[param]; }`;
+		const expected = `function test(param) { const arr = [1, 2, 3]; return arr[param]; }`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Member expression on left side of assignment', () => {
+		const code = `const obj = {prop: 1}; obj.prop = 2;`;
+		const expected = `const obj = {prop: 1}; obj.prop = 2;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Member expression used as call expression callee', () => {
+		const code = `const obj = {fn: function() { return 42; }}; obj.fn();`;
+		const expected = `const obj = {fn: function() { return 42; }}; obj.fn();`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Property with skipped name (length)', () => {
+		const code = `const arr = [1, 2, 3]; const val = arr.length;`;
+		const expected = `const arr = [1, 2, 3]; const val = arr.length;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+});
+
