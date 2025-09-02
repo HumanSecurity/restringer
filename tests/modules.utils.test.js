@@ -879,11 +879,39 @@ describe('UTILS: getDeclarationWithContext', async () => {
 		const expected = [ast[2]];
 		assert.deepStrictEqual(result, expected);
 	});
+	it(`TP-7: Node without scriptHash should still work` , () => {
+		const code = `function test() { return 42; } test();`;
+		const ast = generateFlatAST(code);
+		const callNode = ast.find(n => n.type === 'CallExpression');
+		delete callNode.scriptHash; // Remove scriptHash property
+		const result = targetModule(callNode);
+		const expected = [ast.find(n => n.type === 'CallExpression'), ast.find(n => n.type === 'FunctionDeclaration')];
+		assert.deepStrictEqual(result, expected);
+	});
+	it(`TP-8: Node without nodeId should still work` , () => {
+		const code = `const x = 1; console.log(x);`;
+		const ast = generateFlatAST(code);
+		const callNode = ast.find(n => n.type === 'CallExpression');
+		delete callNode.nodeId; // Remove nodeId property
+		const result = targetModule(callNode);
+		assert.ok(Array.isArray(result));
+		assert.ok(result.length > 0);
+	});
 	it(`TN-1: Prevent collection before changes are applied` , () => {
 		const code = `function a() {}\na = {};\na.b = 2;\na = a.b;\na(a.b);`;
 		const ast = generateFlatAST(code);
 		ast[9].isMarked = true;
 		const result = targetModule(ast.find(n => n.src === 'a = a.b'), true);
+		const expected = [];
+		assert.deepStrictEqual(result, expected);
+	});
+	it(`TN-2: Handle null input gracefully` , () => {
+		const result = targetModule(null);
+		const expected = [];
+		assert.deepStrictEqual(result, expected);
+	});
+	it(`TN-3: Handle undefined input gracefully` , () => {
+		const result = targetModule(undefined);
 		const expected = [];
 		assert.deepStrictEqual(result, expected);
 	});

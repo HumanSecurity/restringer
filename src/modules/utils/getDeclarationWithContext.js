@@ -4,60 +4,94 @@ import {isNodeInRanges} from './isNodeInRanges.js';
 import {PROPERTIES_THAT_MODIFY_CONTENT} from '../config.js';
 import {doesDescendantMatchCondition} from './doesDescendantMatchCondition.js';
 
-// Types that give no context by themselves
-const irrelevantTypesToBeFilteredOut = [
+// Node types that provide no meaningful context and should be filtered from final results
+const IRRELEVANT_FILTER_TYPES = [
 	'Literal',
-	'Identifier',
+	'Identifier', 
 	'MemberExpression',
 ];
 
-// Relevant types for giving context
-const typesToCollect = [
+// Node types that provide meaningful context for code evaluation
+const TYPES_TO_COLLECT = [
 	'CallExpression',
-	'ArrowFunctionExpression',
+	'ArrowFunctionExpression', 
 	'AssignmentExpression',
 	'FunctionDeclaration',
 	'FunctionExpression',
 	'VariableDeclarator',
 ];
 
-// Child nodes that can be skipped as they give no context
-const irrelevantTypesToAvoidIteratingOver = [
+// Child node types that can be skipped during traversal as they provide no useful context
+const SKIP_TRAVERSAL_TYPES = [
 	'Literal',
 	'ThisExpression',
 ];
 
-// Direct child nodes of an if statement
-const ifKeys = ['consequent', 'alternate'];
+// IfStatement child keys for detecting conditional execution contexts
+const IF_STATEMENT_KEYS = ['consequent', 'alternate'];
 
-// Node types which are acceptable when wrapping an anonymous function
-const standaloneNodeTypes = ['ExpressionStatement', 'AssignmentExpression', 'VariableDeclarator'];
+// Node types that can properly wrap anonymous function expressions
+const STANDALONE_WRAPPER_TYPES = ['ExpressionStatement', 'AssignmentExpression', 'VariableDeclarator'];
 
 /**
- * @param {ASTNode} targetNode
- * @return {boolean} True if the target node is directly under an if statement; false otherwise
+ * Determines if a node is positioned as the consequent or alternate branch of an IfStatement.
+ * This is used to identify nodes that are conditionally executed and may need special handling.
+ *
+ * @param {ASTNode} targetNode - The AST node to check
+ * @return {boolean} True if the node is in an if statement branch, false otherwise
  */
 function isConsequentOrAlternate(targetNode) {
+	if (!targetNode?.parentNode) return false;
+	
 	return targetNode.parentNode.type === 'IfStatement' ||
-		ifKeys.includes(targetNode.parentKey) ||
-		ifKeys.includes(targetNode.parentNode.parentKey) ||
-		(targetNode.parentNode.parentNode.type === 'BlockStatement' && ifKeys.includes(targetNode.parentNode.parentNode.parentKey));
+		IF_STATEMENT_KEYS.includes(targetNode.parentKey) ||
+		IF_STATEMENT_KEYS.includes(targetNode.parentNode.parentKey) ||
+		(targetNode.parentNode.parentNode?.type === 'BlockStatement' && 
+		 IF_STATEMENT_KEYS.includes(targetNode.parentNode.parentNode.parentKey));
 }
 
 /**
- * @param {ASTNode} n
- * @return {boolean} True if the target node is the object of a member expression
- *                   and its property is being assigned to; false otherwise.
+ * Determines if a node is the object of a member expression that is being assigned to or modified.
+ * This identifies cases where the node's content may be altered through property assignment
+ * or method calls that modify the object (e.g., array mutating methods).
+ *
+ * @param {ASTNode} n - The AST node to check
+ * @return {boolean} True if the node is subject to property assignment/modification, false otherwise
+ * 
+ * Examples of detected patterns:
+ * - obj.prop = value (assignment to property)
+ * - obj.push(item) (mutating method call)
+ * - obj[key] = value (computed property assignment)
  */
 function isNodeAnAssignmentToProperty(n) {
-	return n.parentNode.type === 'MemberExpression' &&
-	!isConsequentOrAlternate(n.parentNode) &&
-	((n.parentNode.parentNode.type === 'AssignmentExpression' &&  // e.g. targetNode.prop = value
-			n.parentNode.parentKey === 'left') ||
-		(n.parentKey === 'object' &&
-			(n.parentNode.property.isMarked ||  // Marked references won't be collected
-				// PROPERTIES_THAT_MODIFY_CONTENT - e.g. targetNode.push(value) - changes the value of targetNode
-				PROPERTIES_THAT_MODIFY_CONTENT.includes(n.parentNode.property?.value || n.parentNode.property.name))));
+	if (!n?.parentNode || n.parentNode.type !== 'MemberExpression') {
+		return false;
+	}
+	
+	if (isConsequentOrAlternate(n.parentNode)) {
+		return false;
+	}
+	
+	// Check for assignment to property: obj.prop = value
+	if (n.parentNode.parentNode?.type === 'AssignmentExpression' && 
+		n.parentNode.parentKey === 'left') {
+		return true;
+	}
+	
+	// Check for mutating method calls: obj.push(value)
+	if (n.parentKey === 'object') {
+		const property = n.parentNode.property;
+		if (property?.isMarked) {
+			return true; // Marked references won't be collected
+		}
+		
+		const propertyName = property?.value || property?.name;
+		if (propertyName && PROPERTIES_THAT_MODIFY_CONTENT.includes(propertyName)) {
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 /**
@@ -79,27 +113,48 @@ function removeRedundantNodes(nodes) {
 }
 
 /**
- * @param {ASTNode} originNode
- * @param {boolean} [excludeOriginNode] (optional) Do not return the originNode. Defaults to false.
- * @return {ASTNode[]} A flat array of all available declarations and call expressions relevant to
- * the context of the origin node.
+ * Collects all declarations and call expressions that provide context for evaluating a given AST node.
+ * This function gathers relevant nodes needed for safe code evaluation,
+ * such as function declarations, variable assignments, and call expressions that may affect the behavior.
+ *
+ * The algorithm uses caching to avoid expensive re-computation for nodes with identical content,
+ * and includes logic to handle:
+ * - Variable references and their declarations
+ * - Function scope and closure variables  
+ * - Anonymous function expressions and their contexts
+ * - Anti-debugging function overwrites (ignoring reassigned function declarations)
+ * - Marked nodes (scheduled for replacement/deletion) - aborts collection if found
+ *
+ * @param {ASTNode} originNode - The starting AST node to collect context for
+ * @param {boolean} [excludeOriginNode=false] - Whether to exclude the origin node from results
+ * @return {ASTNode[]} Array of context nodes (declarations, assignments, calls) relevant for evaluation
  */
 export function getDeclarationWithContext(originNode, excludeOriginNode = false) {
+	// Input validation to prevent crashes
+	if (!originNode) {
+		return [];
+	}
 	/** @type {ASTNode[]} */
 	const stack = [originNode];   // The working stack for nodes to be reviewed
 	/** @type {ASTNode[]} */
 	const collected = [];         // These will be our context
-	/** @type {ASTNode[]} */
-	const seenNodes = [];         // Collected to avoid re-iterating over the same nodes
+	/** @type {Set<ASTNode>} */
+	const visitedNodes = new Set();  // Track visited nodes to prevent infinite loops
 	/** @type {number[][]} */
-	const collectedRanges = [];   // Collected to prevent collecting nodes from within collected nodes.
+	const collectedRanges = [];   // Prevent collecting overlapping nodes
+	
 	/**
-	 * @param {ASTNode} node
+	 * Adds a node to the traversal stack if it hasn't been visited and is worth traversing.
+	 * @param {ASTNode} node - Node to potentially add to stack
 	 */
 	function addToStack(node) {
-		if (seenNodes.includes(node) ||
+		if (!node || 
+			visitedNodes.has(node) ||
 			stack.includes(node) ||
-			irrelevantTypesToAvoidIteratingOver.includes(node.type)) {} else stack.push(node);
+			SKIP_TRAVERSAL_TYPES.includes(node.type)) {
+			return;
+		}
+		stack.push(node);
 	}
 	const cache = getCache(originNode.scriptHash);
 	const srcHash = generateHash(originNode.src);
@@ -109,14 +164,14 @@ export function getDeclarationWithContext(originNode, excludeOriginNode = false)
 	if (!cached) {
 		while (stack.length) {
 			const node = stack.shift();
-			if (seenNodes.includes(node)) continue;
-			seenNodes.push(node);
+			if (visitedNodes.has(node)) continue;
+			visitedNodes.add(node);
 			// Do not collect any context if one of the relevant nodes is marked to be replaced or deleted
 			if (node.isMarked || doesDescendantMatchCondition(node, n => n.isMarked)) {
 				collected.length = 0;
 				break;
 			}
-			if (typesToCollect.includes(node.type) && !isNodeInRanges(node, collectedRanges)) {
+			if (TYPES_TO_COLLECT.includes(node.type) && !isNodeInRanges(node, collectedRanges)) {
 				collected.push(node);
 				collectedRanges.push(node.range);
 			}
@@ -153,19 +208,22 @@ export function getDeclarationWithContext(originNode, excludeOriginNode = false)
 					if (node.property?.declNode) targetNodes.push(node.property.declNode);
 					break;
 				case 'FunctionExpression':
-					// Review the parent node of anonymous functions
+					// Review the parent node of anonymous functions to understand their context
 					if (!node.id) {
 						let targetParent = node;
-						while (targetParent.parentNode && !standaloneNodeTypes.includes(targetParent.type)) {
+						while (targetParent.parentNode && !STANDALONE_WRAPPER_TYPES.includes(targetParent.type)) {
 							targetParent = targetParent.parentNode;
 						}
-						if (standaloneNodeTypes.includes(targetParent.type)) targetNodes.push(targetParent);
+						if (STANDALONE_WRAPPER_TYPES.includes(targetParent.type)) {
+							targetNodes.push(targetParent);
+						}
 					}
+					break;
 			}
 
 			for (let i = 0; i < targetNodes.length; i++) {
 				const targetNode = targetNodes[i];
-				if (!seenNodes.includes(targetNode)) stack.push(targetNode);
+				if (!visitedNodes.has(targetNode)) stack.push(targetNode);
 				// noinspection JSUnresolvedVariable
 				if (targetNode === targetNode.scope.block) {
 					// Collect out-of-scope variables used inside the scope
@@ -180,25 +238,42 @@ export function getDeclarationWithContext(originNode, excludeOriginNode = false)
 				}
 			}
 		}
-		cached = new Set();
+		// Filter and deduplicate collected nodes
+		/** @type {Set<ASTNode>} */
+		const filteredNodes = new Set();
+		
 		for (let i = 0; i < collected.length; i++) {
 			const n = collected[i];
-			if (!(
-				cached.has(n) ||
-				irrelevantTypesToBeFilteredOut.includes(n.type)) &&
-				!(excludeOriginNode && isNodeInRanges(n, [originNode.range]))) {
-				// A fix to ignore reassignments in cases where functions are overwritten as part of an anti-debugging mechanism
-				if (n.type === 'FunctionDeclaration' && n.id && n.id.references?.length) {
-					for (let j = 0; j < n.id.references.length; j++) {
-						const ref = n.id.references[j];
-						if (!(ref.parentKey === 'left' && ref.parentNode.type === 'AssignmentExpression')) {
-							cached.add(n);
-						}
+			
+			// Skip if already added, irrelevant type, or should be excluded
+			if (filteredNodes.has(n) || 
+				IRRELEVANT_FILTER_TYPES.includes(n.type) ||
+				(excludeOriginNode && isNodeInRanges(n, [originNode.range]))) {
+				continue;
+			}
+			
+			// Handle anti-debugging function overwrites by ignoring reassigned functions
+			if (n.type === 'FunctionDeclaration' && n.id?.references?.length) {
+				let hasNonAssignmentReference = false;
+				const references = n.id.references;
+				
+				for (let j = 0; j < references.length; j++) {
+					const ref = references[j];
+					if (!(ref.parentKey === 'left' && ref.parentNode?.type === 'AssignmentExpression')) {
+						hasNonAssignmentReference = true;
+						break;
 					}
-				} else cached.add(n);
+				}
+				
+				if (hasNonAssignmentReference) {
+					filteredNodes.add(n);
+				}
+			} else {
+				filteredNodes.add(n);
 			}
 		}
-		cached = removeRedundantNodes([...cached]);
+		// Convert to array and remove redundant nodes
+		cached = removeRedundantNodes([...filteredNodes]);
 		cache[cacheNameId] = cached;        // Caching context for the same node
 		cache[cacheNameSrc] = cached;       // Caching context for a different node with similar content
 	}
