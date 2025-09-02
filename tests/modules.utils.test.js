@@ -1146,19 +1146,67 @@ describe('UTILS: getObjType', async () => {
 });
 describe('UTILS: isNodeInRanges', async () => {
 	const targetModule = (await import('../src/modules/utils/isNodeInRanges.js')).isNodeInRanges;
-	it('TP-1: In range', () => {
+	it('TP-1: Node completely within single range', () => {
 		const code = `a.b;`;
 		const ast = generateFlatAST(code);
 		const targetNode = ast.find(n => n.src === 'b');
 		const result = targetModule(targetNode, [[2, 3]]);
 		assert.ok(result);
 	});
-	it('TN-1: Not in range', () => {
+	it('TP-2: Node within multiple ranges (first match)', () => {
+		const code = `a.b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'b');
+		const result = targetModule(targetNode, [[0, 5], [10, 15]]);
+		assert.ok(result);
+	});
+	it('TP-3: Node within multiple ranges (second match)', () => {
+		const code = `a.b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'b');
+		const result = targetModule(targetNode, [[0, 1], [2, 4]]);
+		assert.ok(result);
+	});
+	it('TP-4: Node exactly matching range boundaries', () => {
+		const code = `a.b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'b');
+		const result = targetModule(targetNode, [[2, 3]]);
+		assert.ok(result);
+	});
+	it('TP-5: Large range containing small node', () => {
+		const code = `function test() { return x; }`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'x');
+		const result = targetModule(targetNode, [[0, 100]]);
+		assert.ok(result);
+	});
+	it('TN-1: Node extends beyond range end', () => {
 		const code = `a.b;`;
 		const ast = generateFlatAST(code);
 		const targetNode = ast.find(n => n.src === 'b');
 		const result = targetModule(targetNode, [[1, 2]]);
-		const expected = false;
-		assert.strictEqual(result, expected);
+		assert.strictEqual(result, false);
+	});
+	it('TN-2: Node starts before range start', () => {
+		const code = `a.b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'a');
+		const result = targetModule(targetNode, [[1, 5]]);
+		assert.strictEqual(result, false);
+	});
+	it('TN-3: Empty ranges array', () => {
+		const code = `a.b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.src === 'b');
+		const result = targetModule(targetNode, []);
+		assert.strictEqual(result, false);
+	});
+	it('TN-4: Node range partially overlapping but not contained', () => {
+		const code = `function test() {}`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'FunctionDeclaration');
+		const result = targetModule(targetNode, [[5, 10]]);
+		assert.strictEqual(result, false);
 	});
 });
