@@ -375,6 +375,69 @@ describe('UTILS: doesDescendantMatchCondition', async () => {
 	});
 });
 
+describe('UTILS: generateHash', async () => {
+	const targetModule = (await import('../src/modules/utils/generateHash.js')).generateHash;
+	
+	it('TP-1: Generate hash for normal string', () => {
+		const input = 'const a = 1;';
+		const result = targetModule(input);
+		assert.strictEqual(typeof result, 'string');
+		assert.strictEqual(result.length, 32); // MD5 produces 32-char hex
+		assert.match(result, /^[a-f0-9]{32}$/); // Valid hex string
+	});
+	it('TP-2: Generate hash for AST node with .src property', () => {
+		const mockNode = { src: 'const b = 2;', type: 'VariableDeclaration' };
+		const result = targetModule(mockNode);
+		assert.strictEqual(typeof result, 'string');
+		assert.strictEqual(result.length, 32);
+		assert.match(result, /^[a-f0-9]{32}$/);
+	});
+	it('TP-3: Generate hash for number input', () => {
+		const result = targetModule(42);
+		assert.strictEqual(typeof result, 'string');
+		assert.strictEqual(result.length, 32);
+		assert.match(result, /^[a-f0-9]{32}$/);
+	});
+	it('TP-4: Generate hash for boolean input', () => {
+		const result = targetModule(true);
+		assert.strictEqual(typeof result, 'string');
+		assert.strictEqual(result.length, 32);
+		assert.match(result, /^[a-f0-9]{32}$/);
+	});
+	it('TP-5: Generate hash for empty string', () => {
+		const result = targetModule('');
+		assert.strictEqual(typeof result, 'string');
+		assert.strictEqual(result.length, 32);
+		assert.match(result, /^[a-f0-9]{32}$/);
+	});
+	it('TP-6: Consistent hashes for identical inputs', () => {
+		const input = 'function test() {}';
+		const hash1 = targetModule(input);
+		const hash2 = targetModule(input);
+		assert.strictEqual(hash1, hash2);
+	});
+	it('TP-7: Different hashes for different inputs', () => {
+		const hash1 = targetModule('const a = 1;');
+		const hash2 = targetModule('const a = 2;');
+		assert.notStrictEqual(hash1, hash2);
+	});
+	it('TN-1: Handle null input gracefully', () => {
+		const result = targetModule(null);
+		assert.strictEqual(result, 'null-undefined-hash');
+	});
+	it('TN-2: Handle undefined input gracefully', () => {
+		const result = targetModule(undefined);
+		assert.strictEqual(result, 'null-undefined-hash');
+	});
+	it('TN-3: Handle object without .src property', () => {
+		const mockObj = { type: 'SomeNode', value: 42 };
+		const result = targetModule(mockObj);
+		assert.strictEqual(typeof result, 'string');
+		// Should convert object to string representation
+		assert.match(result, /^[a-f0-9]{32}$/);
+	});
+});
+
 describe('UTILS: createOrderedSrc', async () => {
 	const targetModule = (await import('../src/modules/utils/createOrderedSrc.js')).createOrderedSrc;
 	it('TP-1: Re-order nodes', () => {
