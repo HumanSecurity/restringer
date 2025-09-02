@@ -6,20 +6,130 @@ import {BAD_VALUE} from '../src/modules/config.js';
 
 describe('UTILS: evalInVm', async () => {
 	const targetModule = (await import('../src/modules/utils/evalInVm.js')).evalInVm;
-	it('TP-1', () => {
+	it('TP-1: String concatenation', () => {
 		const code = `'hello ' + 'there';`;
 		const expected = {type: 'Literal', value: 'hello there', raw: 'hello there'};
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-1', () => {
+	it('TP-2: Arithmetic operations', () => {
+		const code = `5 + 3 * 2`;
+		const expected = {type: 'Literal', value: 11, raw: '11'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Array literal evaluation', () => {
+		const code = `[1, 2, 3]`;
+		const result = targetModule(code);
+		assert.strictEqual(result.type, 'ArrayExpression');
+		assert.strictEqual(result.elements.length, 3);
+	});
+	it('TP-4: Object literal evaluation', () => {
+		const code = `({a: 1, b: 2})`;
+		const result = targetModule(code);
+		assert.strictEqual(result.type, 'ObjectExpression');
+		assert.strictEqual(result.properties.length, 2);
+	});
+	it('TP-5: Boolean operations', () => {
+		const code = `true && false`;
+		const expected = {type: 'Literal', value: false, raw: 'false'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Array length property', () => {
+		const code = `[1, 2, 3].length`;
+		const expected = {type: 'Literal', value: 3, raw: '3'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-7: String method calls', () => {
+		const code = `'test'.toUpperCase()`;
+		const expected = {type: 'Literal', value: 'TEST', raw: 'TEST'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-8: Caching behavior - identical code returns same result', () => {
+		const code = `2 + 2`;
+		const result1 = targetModule(code);
+		const result2 = targetModule(code);
+		assert.deepStrictEqual(result1, result2);
+	});
+	it('TP-9: Sandbox reuse', async () => {
+		const {Sandbox} = await import('../src/modules/utils/sandbox.js');
+		const sandbox = new Sandbox();
+		const code = `5 * 5`;
+		const expected = {type: 'Literal', value: 25, raw: '25'};
+		const result = targetModule(code, sandbox);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-10: Multi-statement code with valid operations', () => {
+		const code = `var x = 5; x * 2`;
+		const expected = {type: 'Literal', value: 10, raw: '10'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-11: Trap neutralization - infinite while loop', () => {
+		const code = `while(true) {}; 'safe'`;
+		const expected = {type: 'Literal', value: 'safe', raw: 'safe'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-12: Complex expression evaluation', () => {
+		const code = `Math.pow(2, 3) + 2`;
+		const expected = {type: 'Literal', value: 10, raw: '10'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-14: Debugger statement (neutralized and evaluates successfully)', () => {
+		const code = `debugger; 42`;
+		const expected = {type: 'Literal', value: 42, raw: '42'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-13: Split debugger string neutralization works', () => {
+		const code = `'debu' + 'gger'; 123`;
+		const expected = {type: 'Literal', value: 123, raw: '123'};
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Non-deterministic function calls', () => {
 		const code = `Math.random();`;
 		const expected = BAD_VALUE;
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-2', () => {
+	it('TN-2: Console object evaluation', () => {
 		const code = `function a() {return console;} a();`;
+		const expected = BAD_VALUE;
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Promise objects (bad type)', () => {
+		const code = `Promise.resolve(42)`;
+		const expected = BAD_VALUE;
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Invalid syntax', () => {
+		const code = `invalid syntax {{{`;
+		const expected = BAD_VALUE;
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Function calls with side effects', () => {
+		const code = `alert('test')`;
+		const expected = BAD_VALUE;
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Variable references (undefined)', () => {
+		const code = `unknownVariable`;
+		const expected = BAD_VALUE;
+		const result = targetModule(code);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-7: Complex expressions with timing dependencies', () => {
+		const code = `Date.now()`;
 		const expected = BAD_VALUE;
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
