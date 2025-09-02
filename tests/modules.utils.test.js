@@ -458,61 +458,7 @@ describe('UTILS: createOrderedSrc', async () => {
 		assert.deepStrictEqual(result, expected);
 	});
 });
-describe('UTILS: doesBinaryExpressionContainOnlyLiterals', async () => {
-	const targetModule = (await import('../src/modules/utils/doesBinaryExpressionContainOnlyLiterals.js')).doesBinaryExpressionContainOnlyLiterals;
-	it('TP-1: Literal', () => {
-		const code = `'a';`;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'Literal'));
-		assert.ok(result);
-	});
-	it('TP-2: Unary literal', () => {
-		const code = `-'a';`;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'UnaryExpression'));
-		assert.ok(result);
-	});
-	it('TP-3: Binary expression', () => {
-		const code = `1 + 2`;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'BinaryExpression'));
-		assert.ok(result);
-	});
-	it('TP-4: Nesting binary expressions', () => {
-		const code = `1 + 2 + 3 + 4`;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'BinaryExpression'));
-		assert.ok(result);
-	});
-	it('TN-1: Identifier', () => {
-		const code = `a`;
-		const expected = false;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'Identifier'));
-		assert.strictEqual(result, expected);
-	});
-	it('TN-2: Unary Identifier', () => {
-		const code = `!a`;
-		const expected = false;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'UnaryExpression'));
-		assert.strictEqual(result, expected);
-	});
-	it('TN-3: Binary expression', () => {
-		const code = `1 + b`;
-		const expected = false;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'BinaryExpression'));
-		assert.strictEqual(result, expected);
-	});
-	it('TN-3: Nesting binary expression', () => {
-		const code = `1 + b + 3 + 4`;
-		const expected = false;
-		const ast = generateFlatAST(code);
-		const result = targetModule(ast.find(n => n.type === 'BinaryExpression'));
-		assert.strictEqual(result, expected);
-	});
-});
+
 describe('UTILS: getCache', async () => {
 	const getCache = (await import('../src/modules/utils/getCache.js')).getCache;
 	it('TP-1: Retain values', () => {

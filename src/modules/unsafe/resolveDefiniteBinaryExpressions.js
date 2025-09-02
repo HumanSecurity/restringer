@@ -1,7 +1,77 @@
+import {logger} from 'flast';
 import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
-import {doesBinaryExpressionContainOnlyLiterals} from '../utils/doesBinaryExpressionContainOnlyLiterals.js';
+
+/**
+ * Recursively determines if an AST expression contains only literal values.
+ * This is useful for identifying expressions that can be safely evaluated at compile time.
+ * Supports binary expressions, unary expressions, logical expressions, conditional expressions,
+ * sequence expressions, update expressions, and parenthesized expressions.
+ *
+ * @param {ASTNode} expression - The AST node to check for literal-only content
+ * @return {boolean} True if the expression contains only literals; false otherwise
+ *
+ * @example
+ * // Returns true
+ * doesBinaryExpressionContainOnlyLiterals(parseCode('1 + 2').body[0].expression);
+ * doesBinaryExpressionContainOnlyLiterals(parseCode('!true').body[0].expression);
+ * doesBinaryExpressionContainOnlyLiterals(parseCode('true ? 1 : 2').body[0].expression);
+ *
+ * // Returns false  
+ * doesBinaryExpressionContainOnlyLiterals(parseCode('1 + x').body[0].expression);
+ * doesBinaryExpressionContainOnlyLiterals(parseCode('func()').body[0].expression);
+ */
+export function doesBinaryExpressionContainOnlyLiterals(expression) {
+	// Early return for null/undefined to prevent errors
+	if (!expression || !expression.type) {
+		return false;
+	}
+
+	switch (expression.type) {
+		case 'BinaryExpression':
+			// Both operands must contain only literals
+			return doesBinaryExpressionContainOnlyLiterals(expression.left) &&
+				doesBinaryExpressionContainOnlyLiterals(expression.right);
+			
+		case 'UnaryExpression':
+			// Argument must contain only literals (e.g., !true, -5, +"hello")
+			return doesBinaryExpressionContainOnlyLiterals(expression.argument);
+			
+		case 'UpdateExpression':
+			// UpdateExpression requires lvalue (variable/property), never a literal
+			// Valid: ++x, invalid: ++5 (flast won't generate UpdateExpression for invalid syntax)
+			return false;
+			
+		case 'LogicalExpression':
+			// Both operands must contain only literals (e.g., true && false, 1 || 2)
+			return doesBinaryExpressionContainOnlyLiterals(expression.left) &&
+				doesBinaryExpressionContainOnlyLiterals(expression.right);
+			
+		case 'ConditionalExpression':
+			// All three parts must contain only literals (e.g., true ? 1 : 2)
+			return doesBinaryExpressionContainOnlyLiterals(expression.test) &&
+				doesBinaryExpressionContainOnlyLiterals(expression.consequent) &&
+				doesBinaryExpressionContainOnlyLiterals(expression.alternate);
+			
+		case 'SequenceExpression':
+			// All expressions in sequence must contain only literals (e.g., (1, 2, 3))
+			for (let i = 0; i < expression.expressions.length; i++) {
+				if (!doesBinaryExpressionContainOnlyLiterals(expression.expressions[i])) {
+					return false;
+				}
+			}
+			return true;
+			
+		case 'Literal':
+			// Base case: literals are always literal-only
+			return true;
+			
+		default:
+			// Any other node type (Identifier, CallExpression, etc.) is not literal-only
+			return false;
+	}
+}
 
 /**
  * Identifies BinaryExpression nodes that contain only literal values and can be safely evaluated.
