@@ -776,6 +776,24 @@ describe('UNSAFE: resolveLocalCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
+	it('TP-4: Function expression', () => {
+		const code = `const multiply = function(a, b) {return a * b;}; multiply(3, 4);`;
+		const expected = `const multiply = function (a, b) {\n  return a * b;\n};\n12;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-5: Multiple calls to same function', () => {
+		const code = `function double(x) {return x * 2;} double(5); double(10);`;
+		const expected = `function double(x) {\n  return x * 2;\n}\n10;\n20;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-6: Function returning string', () => {
+		const code = `function greet(name) {return 'Hello ' + name;} greet('World');`;
+		const expected = `function greet(name) {\n  return 'Hello ' + name;\n}\n'Hello World';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
 	it('TN-1: Missing declaration', () => {
 		const code = `add(1, 2);`;
 		const expected = code;
@@ -788,8 +806,44 @@ describe('UNSAFE: resolveLocalCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-2: No replacement with undefined', () => {
+	it('TN-3: No replacement with undefined', () => {
 		const code = `function a() {} a();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Complex member expression property access', () => {
+		const code = `const obj = {value: 'test'}; const fn = (o) => o.value; fn(obj);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-7: Function call argument with FunctionExpression', () => {
+		const code = `function test(fn) {return fn();} test(function(){return 'call';});`;
+		const expected = `function test(fn) {\n  return fn();\n}\n'call';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Function toString (anti-debugging protection)', () => {
+		const code = `function test() {return 'test';} test.toString();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Simple wrapper function (handled by safe modules)', () => {
+		const code = `function wrapper() {return 'literal';} wrapper();`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-7: Call with ThisExpression argument', () => {
+		const code = `function test(ctx) {return ctx;} test(this);`;
+		const expected = code;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-8: Member expression call on empty array', () => {
+		const code = `const arr = []; const fn = a => a.length; fn(arr);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
