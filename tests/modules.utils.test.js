@@ -51,11 +51,100 @@ describe('UTILS: areReferencesModified', async () => {
 		const result = targetModule(ast, [ast.find(n => n.src === `a.c = a.b`)?.right]);
 		assert.ok(result);
 	});
+	it('TP-5: Delete operation on object property', () => {
+		const code = `const a = {b: 1, c: 2}; delete a.b;`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {b: 1, c: 2}').id.references);
+		assert.ok(result);
+	});
+	it('TP-6: Delete operation on array element', () => {
+		const code = `const a = [1, 2, 3]; delete a[1];`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [1, 2, 3]').id.references);
+		assert.ok(result);
+	});
+	it('TP-7: For-in loop variable modification', () => {
+		const code = `const a = {x: 1}; for (a.prop in {y: 2}) {}`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {x: 1}').id.references);
+		assert.ok(result);
+	});
+	it('TP-8: For-of loop variable modification', () => {
+		const code = `let a = []; for (a.item of [1, 2, 3]) {}`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = []').id.references);
+		assert.ok(result);
+	});
+	it('TP-9: Array mutating method call', () => {
+		const code = `const a = [1, 2]; a.push(3);`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [1, 2]').id.references);
+		assert.ok(result);
+	});
+	it('TP-10: Array sort method call', () => {
+		const code = `const a = [3, 1, 2]; a.sort();`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [3, 1, 2]').id.references);
+		assert.ok(result);
+	});
+	it('TP-11: Object destructuring assignment', () => {
+		const code = `let a = {x: 1}; ({x: a.y} = {x: 2});`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {x: 1}').id.references);
+		assert.ok(result);
+	});
+	it('TP-12: Array destructuring assignment', () => {
+		const code = `let a = [1]; [a.item] = [2];`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [1]').id.references);
+		assert.ok(result);
+	});
+	it('TP-13: Update expression on member expression', () => {
+		const code = `const a = {count: 0}; a.count++;`;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {count: 0}').id.references);
+		assert.ok(result);
+	});
 	it('TN-1: No assignment', () => {
 		const code = `const a = 1; let b = 2 + a, c = a + 3;`;
 		const expected = false;
 		const ast = generateFlatAST(code);
 		const result = targetModule(ast, ast.find(n => n.src === 'a = 1').id.references);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Read-only property access', () => {
+		const code = `const a = {b: 1}; const c = a.b;`;
+		const expected = false;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {b: 1}').id.references);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Read-only array access', () => {
+		const code = `const a = [1, 2, 3]; const b = a[1];`;
+		const expected = false;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [1, 2, 3]').id.references);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Non-mutating method calls', () => {
+		const code = `const a = [1, 2, 3]; const b = a.slice(1);`;
+		const expected = false;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = [1, 2, 3]').id.references);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: For-in loop with different variable', () => {
+		const code = `const a = {x: 1}; for (let key in a) {}`;
+		const expected = false;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {x: 1}').id.references);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-6: Safe destructuring (different variable)', () => {
+		const code = `const a = {x: 1}; const {x} = a;`;
+		const expected = false;
+		const ast = generateFlatAST(code);
+		const result = targetModule(ast, ast.find(n => n.src === 'a = {x: 1}').id.references);
 		assert.deepStrictEqual(result, expected);
 	});
 });
