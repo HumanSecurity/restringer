@@ -606,29 +606,126 @@ describe('UTILS: createOrderedSrc', async () => {
 
 describe('UTILS: getCache', async () => {
 	const getCache = (await import('../src/modules/utils/getCache.js')).getCache;
-	it('TP-1: Retain values', () => {
-		const key1 = 'hash1';
-		const key2 = 'hash2';
-		const cache = getCache(key1);
-		assert.deepStrictEqual(cache, {});
-		cache['key1'] = 'value1';
-		const expectedC1 = {key1: 'value1'};
-		assert.deepStrictEqual(cache, expectedC1);
-		const cache2 = getCache(key1);
-		assert.deepStrictEqual(cache2, expectedC1);
-		const cache3 = getCache(key2);
-		assert.deepStrictEqual(cache3, {});
-	});
-	it('TP-2: Flush cache', () => {
-		const key = 'flush1';
-		let cache = getCache(key);
-		assert.deepStrictEqual(cache, {});
-		cache['k'] = 'v';
-		const expectedC1 = {k: 'v'};
-		assert.deepStrictEqual(cache, expectedC1);
+	
+	// Reset cache before each test to ensure isolation
+	beforeEach(() => {
 		getCache.flush();
-		cache = getCache(key);
+	});
+	
+	it('TP-1: Retain values for same script hash', () => {
+		const hash1 = 'script-hash-1';
+		const cache = getCache(hash1);
 		assert.deepStrictEqual(cache, {});
+		
+		cache['eval-result'] = 'cached-value';
+		const cache2 = getCache(hash1); // Same hash should return same cache
+		assert.deepStrictEqual(cache2, {['eval-result']: 'cached-value'});
+		assert.strictEqual(cache, cache2); // Should be same object reference
+	});
+	it('TP-2: Cache invalidation on script hash change', () => {
+		const hash1 = 'script-hash-1';
+		const hash2 = 'script-hash-2';
+		
+		const cache1 = getCache(hash1);
+		cache1['data'] = 'first-script';
+		
+		// Different hash should get fresh cache
+		const cache2 = getCache(hash2);
+		assert.deepStrictEqual(cache2, {});
+		assert.notStrictEqual(cache1, cache2); // Different object references
+		
+		// Original cache data should be lost
+		const cache1Again = getCache(hash1);
+		assert.deepStrictEqual(cache1Again, {}); // Fresh cache for hash1
+	});
+	it('TP-3: Manual flush preserves script hash', () => {
+		const hash = 'preserve-hash';
+		const cache = getCache(hash);
+		cache['before-flush'] = 'data';
+		
+		getCache.flush();
+		
+		// Should get empty cache but same hash should not trigger invalidation
+		const cacheAfterFlush = getCache(hash);
+		assert.deepStrictEqual(cacheAfterFlush, {});
+	});
+	it('TP-4: Multiple script hash switches', () => {
+		const hashes = ['hash-a', 'hash-b', 'hash-c'];
+		
+		// Fill cache for each hash
+		for (let i = 0; i < hashes.length; i++) {
+			const cache = getCache(hashes[i]);
+			cache[`data-${i}`] = `value-${i}`;
+		}
+		
+		// Only the last hash should have preserved cache
+		const finalCache = getCache('hash-c');
+		assert.deepStrictEqual(finalCache, {'data-2': 'value-2'});
+		
+		// Previous hashes should get fresh caches
+		for (const hash of ['hash-a', 'hash-b']) {
+			const cache = getCache(hash);
+			assert.deepStrictEqual(cache, {});
+		}
+	});
+	it('TP-5: Cache object mutation persistence', () => {
+		const hash = 'mutation-test';
+		const cache1 = getCache(hash);
+		const cache2 = getCache(hash);
+		
+		// Both should reference the same object
+		cache1['shared'] = 'value';
+		assert.strictEqual(cache2['shared'], 'value');
+		
+		cache2['another'] = 'different';
+		assert.strictEqual(cache1['another'], 'different');
+	});
+	it('TN-1: Handle null script hash gracefully', () => {
+		const cache = getCache(null);
+		assert.deepStrictEqual(cache, {});
+		cache['null-test'] = 'handled';
+		
+		// Should maintain cache for 'no-hash' key
+		const cache2 = getCache(null);
+		assert.deepStrictEqual(cache2, {'null-test': 'handled'});
+	});
+	it('TN-2: Handle undefined script hash gracefully', () => {
+		const cache = getCache(undefined);
+		assert.deepStrictEqual(cache, {});
+		cache['undefined-test'] = 'handled';
+		
+		// Should maintain cache for 'no-hash' key
+		const cache2 = getCache(undefined);
+		assert.deepStrictEqual(cache2, {'undefined-test': 'handled'});
+	});
+	it('TN-3: Null and undefined should share same fallback cache', () => {
+		const cache1 = getCache(null);
+		const cache2 = getCache(undefined);
+		
+		cache1['shared-fallback'] = 'test';
+		assert.strictEqual(cache2['shared-fallback'], 'test');
+		assert.strictEqual(cache1, cache2); // Same object reference
+	});
+	it('TN-4: Empty string script hash', () => {
+		const cache = getCache('');
+		assert.deepStrictEqual(cache, {});
+		cache['empty-string'] = 'value';
+		
+		const cache2 = getCache('');
+		assert.deepStrictEqual(cache2, {'empty-string': 'value'});
+	});
+	it('TN-5: Flush after multiple hash changes', () => {
+		const hash1 = 'multi-1';
+		const hash2 = 'multi-2';
+		
+		getCache(hash1)['data1'] = 'value1';
+		getCache(hash2)['data2'] = 'value2'; // This invalidates hash1's cache
+		
+		getCache.flush(); // Should clear current (hash2) cache
+		
+		// Both should now be empty
+		assert.deepStrictEqual(getCache(hash1), {});
+		assert.deepStrictEqual(getCache(hash2), {});
 	});
 });
 describe('UTILS: getCalleeName', async () => {
