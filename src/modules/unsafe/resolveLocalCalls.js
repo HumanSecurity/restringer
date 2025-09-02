@@ -5,7 +5,7 @@ import {getCalleeName} from '../utils/getCalleeName.js';
 import {isNodeInRanges} from '../utils/isNodeInRanges.js';
 import {createOrderedSrc} from '../utils/createOrderedSrc.js';
 import {getDeclarationWithContext} from '../utils/getDeclarationWithContext.js';
-import {badValue, SKIP_IDENTIFIERS, skipProperties} from '../config.js';
+import {badValue, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
 
 const VALID_UNWRAP_TYPES = ['Literal', 'Identifier'];
 const CACHE_LIMIT = 100;
@@ -55,7 +55,7 @@ export function resolveLocalCallsMatch(arb, candidateFilter = () => true) {
 		// Check if call expression has proper declaration context
 		if ((n.callee?.declNode ||
 			(n.callee?.object?.declNode &&
-				!skipProperties.includes(n.callee.property?.value || n.callee.property?.name)) ||
+				!SKIP_PROPERTIES.includes(n.callee.property?.value || n.callee.property?.name)) ||
 			n.callee?.object?.type === 'Literal') &&
 		candidateFilter(n)) {
 			countAppearances(n);	// Count appearances during the match phase to allow sorting by appearance frequency

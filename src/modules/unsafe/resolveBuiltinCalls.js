@@ -4,7 +4,7 @@ import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createNewNode} from '../utils/createNewNode.js';
 import * as safeImplementations from '../utils/safeImplementations.js';
-import {skipBuiltinFunctions, SKIP_IDENTIFIERS, skipProperties} from '../config.js';
+import {skipBuiltinFunctions, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
 
 const AVAILABLE_SAFE_IMPLEMENTATIONS = Object.keys(safeImplementations);
 
@@ -51,7 +51,7 @@ export function resolveBuiltinCallsMatch(arb, candidateFilter = () => true) {
 			if (n.callee.type === 'MemberExpression' && !n.callee.object.declNode &&
 				!skipBuiltinFunctions.includes(n.callee.object?.name) &&
 				!SKIP_IDENTIFIERS.includes(n.callee.object?.name) &&
-				!skipProperties.includes(n.callee.property?.name || n.callee.property?.value)) {
+				!SKIP_PROPERTIES.includes(n.callee.property?.name || n.callee.property?.value)) {
 				matches.push(n);
 			}
 		}
