@@ -851,21 +851,51 @@ describe('UNSAFE: resolveLocalCalls', async () => {
 });
 describe('UNSAFE: resolveMinimalAlphabet', async () => {
 	const targetModule = (await import('../src/modules/unsafe/resolveMinimalAlphabet.js')).default;
-	it('TP-1', () => {
+	it('TP-1: Unary expressions on literals and arrays', () => {
 		const code = `+true; -true; +false; -false; +[]; ~true; ~false; ~[]; +[3]; +['']; -[4]; ![]; +[[]];`;
 		const expected = `1;\n-'1';\n0;\n-0;\n0;\n-'2';\n-'1';\n-'1';\n3;\n0;\n-'4';\nfalse;\n0;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TP-2', () => {
+	it('TP-2: Binary expressions with arrays (JSFuck patterns)', () => {
 		const code = `[] + []; [+[]]; (![]+[]); +[!+[]+!+[]];`;
 		const expected = `'';\n[0];\n'false';\n2;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-1', () => {
+	it('TP-3: Unary expressions on null literal', () => {
+		const code = `+null; -null; !null;`;
+		const expected = `0;\n-0;\ntrue;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Binary expressions with string concatenation', () => {
+		const code = `true + []; false + ''; null + 'test';`;
+		const expected = `'true';\n'false';\n'nulltest';`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Expressions containing ThisExpression should be skipped', () => {
 		const code = `-false; -[]; +{}; -{}; -'a'; ~{}; -['']; +[1, 2]; +this; +[this];`;
 		const expected = `-0;\n-0;\n+{};\n-{};\nNaN;\n~{};\n-0;\nNaN;\n+this;\n+[this];`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Binary expressions with non-plus operators', () => {
+		const code = `true - false; true * false; true / false;`;
+		const expected = `true - false; true * false; true / false;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Unary expressions on numeric literals', () => {
+		const code = `+42; -42; ~42; !42;`;
+		const expected = `+42; -42; ~42; !42;`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Unary expressions on undefined identifier', () => {
+		const code = `+undefined; -undefined;`;
+		const expected = `+undefined; -undefined;`;
 		const result = applyModuleToCode(code, targetModule);
 		assert.deepStrictEqual(result, expected);
 	});
