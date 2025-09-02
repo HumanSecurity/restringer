@@ -293,6 +293,88 @@ describe('UTILS: createNewNode', async () => {
 	});
 
 });
+describe('UTILS: doesDescendantMatchCondition', async () => {
+	const targetModule = (await import('../src/modules/utils/doesDescendantMatchCondition.js')).doesDescendantMatchCondition;
+	
+	it('TP-1: Find descendant by type (boolean return)', () => {
+		const code = `function test() { return this.prop; }`;
+		const ast = generateFlatAST(code);
+		const functionNode = ast.find(n => n.type === 'FunctionDeclaration');
+		const result = targetModule(functionNode, n => n.type === 'ThisExpression');
+		assert.ok(result);
+	});
+	it('TP-2: Find descendant by type (node return)', () => {
+		const code = `function test() { return this.prop; }`;
+		const ast = generateFlatAST(code);
+		const functionNode = ast.find(n => n.type === 'FunctionDeclaration');
+		const result = targetModule(functionNode, n => n.type === 'ThisExpression', true);
+		assert.strictEqual(result.type, 'ThisExpression');
+	});
+	it('TP-3: Find marked descendant (simulating isMarked property)', () => {
+		const code = `const a = 1 + 2;`;
+		const ast = generateFlatAST(code);
+		const varDecl = ast.find(n => n.type === 'VariableDeclaration');
+		// Simulate marking a descendant node
+		const binaryExpr = ast.find(n => n.type === 'BinaryExpression');
+		binaryExpr.isMarked = true;
+		const result = targetModule(varDecl, n => n.isMarked);
+		assert.ok(result);
+	});
+	it('TP-4: Multiple nested descendants', () => {
+		const code = `function outer() { function inner() { return this.value; } }`;
+		const ast = generateFlatAST(code);
+		const outerFunc = ast.find(n => n.type === 'FunctionDeclaration' && n.id.name === 'outer');
+		const result = targetModule(outerFunc, n => n.type === 'ThisExpression');
+		assert.ok(result);
+	});
+	it('TP-5: Find specific assignment pattern', () => {
+		const code = `const obj = {prop: value}; obj.prop = newValue;`;
+		const ast = generateFlatAST(code);
+		const program = ast[0];
+		const result = targetModule(program, n => 
+			n.type === 'AssignmentExpression' && 
+			n.left?.property?.name === 'prop'
+		);
+		assert.ok(result);
+	});
+	it('TN-1: No matching descendants', () => {
+		const code = `const a = 1 + 2;`;
+		const ast = generateFlatAST(code);
+		const varDecl = ast.find(n => n.type === 'VariableDeclaration');
+		const result = targetModule(varDecl, n => n.type === 'ThisExpression');
+		assert.strictEqual(result, false);
+	});
+	it('TN-2: Node itself matches condition', () => {
+		const code = `const a = 1;`;
+		const ast = generateFlatAST(code);
+		const literal = ast.find(n => n.type === 'Literal');
+		const result = targetModule(literal, n => n.type === 'Literal');
+		assert.ok(result); // Should find the node itself
+	});
+	it('TN-3: Null/undefined input handling', () => {
+		const result1 = targetModule(null, n => n.type === 'Literal');
+		const result2 = targetModule(undefined, n => n.type === 'Literal');
+		const result3 = targetModule({}, null);
+		const result4 = targetModule({}, undefined);
+		assert.strictEqual(result1, false);
+		assert.strictEqual(result2, false);
+		assert.strictEqual(result3, false);
+		assert.strictEqual(result4, false);
+	});
+	it('TN-4: Node with no children', () => {
+		const code = `const name = 'test';`;
+		const ast = generateFlatAST(code);
+		const literal = ast.find(n => n.type === 'Literal');
+		const result = targetModule(literal, n => n.type === 'ThisExpression');
+		assert.strictEqual(result, false);
+	});
+	it('TN-5: Empty childNodes array', () => {
+		const mockNode = { type: 'MockNode', childNodes: [] };
+		const result = targetModule(mockNode, n => n.type === 'ThisExpression');
+		assert.strictEqual(result, false);
+	});
+});
+
 describe('UTILS: createOrderedSrc', async () => {
 	const targetModule = (await import('../src/modules/utils/createOrderedSrc.js')).createOrderedSrc;
 	it('TP-1: Re-order nodes', () => {
