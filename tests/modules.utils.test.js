@@ -1012,7 +1012,7 @@ describe('UTILS: getDescendants', async () => {
 });
 describe('UTILS: getMainDeclaredObjectOfMemberExpression', async () => {
 	const targetModule = (await import('../src/modules/utils/getMainDeclaredObjectOfMemberExpression.js')).getMainDeclaredObjectOfMemberExpression;
-	it('TP-1', () => {
+	it('TP-1: Simple member expression with declared object', () => {
 		const code = `a.b;`;
 		const ast = generateFlatAST(code);
 		const targetNode = ast.find(n => n.type === 'MemberExpression');
@@ -1020,13 +1020,61 @@ describe('UTILS: getMainDeclaredObjectOfMemberExpression', async () => {
 		const result = targetModule(targetNode);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TP-2: Nested member expression', () => {
+	it('TP-2: Nested member expression finds root identifier', () => {
 		const code = `a.b.c.d;`;
 		const ast = generateFlatAST(code);
 		const targetNode = ast.find(n => n.type === 'MemberExpression');
 		const expected = ast.find(n => n.type === 'Identifier' && n.src === 'a');
 		const result = targetModule(targetNode);
 		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-3: Computed member expression with declared base', () => {
+		const code = `obj[key].prop;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'MemberExpression' && n.property?.name === 'prop');
+		const expected = ast.find(n => n.type === 'Identifier' && n.name === 'obj');
+		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TP-4: Deep nesting finds correct root', () => {
+		const code = `root.level1.level2.level3.level4;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'MemberExpression' && n.property?.name === 'level4');
+		const expected = ast.find(n => n.type === 'Identifier' && n.name === 'root');
+		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-1: Non-MemberExpression input returns the input unchanged', () => {
+		const code = `const x = 42;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'Identifier' && n.name === 'x');
+		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, targetNode); // Original behavior: return input unchanged
+	});
+	it('TN-2: Null input returns null', () => {
+		const result = targetModule(null);
+		assert.strictEqual(result, null);
+	});
+	it('TN-3: Undefined input returns null', () => {
+		const result = targetModule(undefined);
+		assert.strictEqual(result, null);
+	});
+	it('TN-4: Member expression with no declNode still returns the object', () => {
+		const code = `undeclared.prop;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'MemberExpression');
+		// Remove declNode from the identifier to simulate undeclared variable
+		const identifier = targetNode.object;
+		delete identifier.declNode;
+		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, identifier); // Should return the identifier even without declNode
+	});
+	it('TN-5: Non-MemberExpression with declNode returns itself', () => {
+		const code = `const x = 42; x;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'Identifier' && n.name === 'x' && n.declNode);
+		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, targetNode);
 	});
 });
 describe('UTILS: isNodeInRanges', async () => {
