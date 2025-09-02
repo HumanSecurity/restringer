@@ -934,12 +934,79 @@ describe('UTILS: getDescendants', async () => {
 		const result = targetModule(targetNode);
 		assert.deepStrictEqual(result, expected);
 	});
-	it('TN-1: No descendants', () => {
+	it('TP-3: Nested function with complex descendants', () => {
+		const code = `function test(a) { return a + (b * c); }`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'FunctionDeclaration');
+		const result = targetModule(targetNode);
+		// Should include all nested nodes: parameters, body, expressions, identifiers
+		assert.ok(Array.isArray(result));
+		assert.ok(result.length > 8); // Should have many nested descendants
+		assert.ok(result.some(n => n.type === 'Identifier' && n.name === 'a'));
+		assert.ok(result.some(n => n.type === 'BinaryExpression'));
+	});
+	it('TP-4: Object expression with properties', () => {
+		const code = `const obj = { prop1: value1, prop2: value2 };`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'ObjectExpression');
+		const result = targetModule(targetNode);
+		assert.ok(Array.isArray(result));
+		assert.ok(result.length > 4); // Properties and their values
+		assert.ok(result.some(n => n.type === 'Property'));
+		assert.ok(result.some(n => n.type === 'Identifier' && n.name === 'value1'));
+	});
+	it('TP-5: Array expression with elements', () => {
+		const code = `const arr = [a, b + c, func()];`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'ArrayExpression');
+		const result = targetModule(targetNode);
+		assert.ok(Array.isArray(result));
+		assert.ok(result.length > 5); // Elements and their nested parts
+		assert.ok(result.some(n => n.type === 'Identifier' && n.name === 'a'));
+		assert.ok(result.some(n => n.type === 'BinaryExpression'));
+		assert.ok(result.some(n => n.type === 'CallExpression'));
+	});
+	it('TP-6: Caching behavior - same node returns cached result', () => {
+		const code = `a + b;`;
+		const ast = generateFlatAST(code);
+		const targetNode = ast.find(n => n.type === 'BinaryExpression');
+		
+		const result1 = targetModule(targetNode);
+		const result2 = targetModule(targetNode);
+		
+		// Should return same cached array reference
+		assert.strictEqual(result1, result2);
+		assert.ok(targetNode.descendants); // Cache property should exist
+		assert.strictEqual(targetNode.descendants, result1);
+	});
+	it('TN-1: No descendants for leaf nodes', () => {
 		const code = `a; b; c;`;
 		const ast = generateFlatAST(code);
 		const targetNode = ast.find(n => n.type === 'Identifier');
 		const expected = [];
 		const result = targetModule(targetNode);
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-2: Null input returns empty array', () => {
+		const result = targetModule(null);
+		const expected = [];
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-3: Undefined input returns empty array', () => {
+		const result = targetModule(undefined);
+		const expected = [];
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-4: Node with no childNodes property', () => {
+		const mockNode = { type: 'MockNode' }; // No childNodes
+		const result = targetModule(mockNode);
+		const expected = [];
+		assert.deepStrictEqual(result, expected);
+	});
+	it('TN-5: Node with empty childNodes array', () => {
+		const mockNode = { type: 'MockNode', childNodes: [] };
+		const result = targetModule(mockNode);
+		const expected = [];
 		assert.deepStrictEqual(result, expected);
 	});
 });

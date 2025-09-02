@@ -1,25 +1,52 @@
 /**
- * @param {ASTNode} targetNode
- * @return {ASTNode[]} A flat array of all decendants of the target node
+ * Collects all descendant nodes from a given AST node.
+ * The function uses caching to avoid recomputation for nodes that have already been processed,
+ * storing results in a 'descendants' property on the target node.
+ *
+ * Algorithm:
+ * - Uses a stack-based traversal to avoid recursion depth limits
+ * - Uses Set for O(1) duplicate detection during traversal
+ * - Caches results as array on the node to prevent redundant computation
+ * - Returns a flat array containing all child nodes
+ *
+ * @param {ASTNode} targetNode - The AST node to collect descendants from
+ * @return {ASTNode[]} Flat array of all descendant nodes, or empty array if no descendants or invalid input
+ *
+ * @example
+ * // For a binary expression like "a + b"
+ * const descendants = getDescendants(binaryExprNode);
+ * // Returns [leftIdentifier, rightIdentifier] - all nested child nodes
  */
-function getDescendants(targetNode) {
-	if (targetNode?.['decendants']) return targetNode['decendants'];
-	/** @type {ASTNode[]} */
-	const offsprings = [];
+export function getDescendants(targetNode) {
+	// Input validation
+	if (!targetNode) {
+		return [];
+	}
+	
+	// Return cached result if available
+	if (targetNode.descendants) {
+		return targetNode.descendants;
+	}
+	
+	/** @type {Set<ASTNode>} */
+	const descendants = new Set();
 	/** @type {ASTNode[]} */
 	const stack = [targetNode];
+	
 	while (stack.length) {
 		const currentNode = stack.pop();
-		const childNodes = currentNode.childNodes || [];
+		const childNodes = currentNode?.childNodes || [];
+		
 		for (let i = 0; i < childNodes.length; i++) {
 			const childNode = childNodes[i];
-			if (!offsprings.includes(childNode)) {
-				offsprings.push(childNode);
+			if (!descendants.has(childNode)) {
+				descendants.add(childNode);
 				stack.push(childNode);
 			}
 		}
 	}
-	return targetNode['decendants'] = offsprings;
+	
+	// Cache results as array on the target node for future calls
+	const descendantsArray = [...descendants];
+	return targetNode.descendants = descendantsArray;
 }
-
-export {getDescendants};
