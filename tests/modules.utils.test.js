@@ -1320,3 +1320,78 @@ describe('UTILS: isNodeInRanges', async () => {
 		assert.strictEqual(result, false);
 	});
 });
+describe('UTILS: Sandbox', async () => {
+	const {Sandbox} = await import('../src/modules/utils/sandbox.js');
+	it('TP-1: Basic code execution', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('2 + 3');
+		assert.ok(sandbox.isReference(result));
+		assert.strictEqual(result.copySync(), 5);
+	});
+	it('TP-2: String operations', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('"hello" + " world"');
+		assert.ok(sandbox.isReference(result));
+		assert.strictEqual(result.copySync(), 'hello world');
+	});
+	it('TP-3: Array operations', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('[1, 2, 3].length');
+		assert.ok(sandbox.isReference(result));
+		assert.strictEqual(result.copySync(), 3);
+	});
+	it('TP-4: Object operations', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('({a: 1, b: 2}).a');
+		assert.ok(sandbox.isReference(result));
+		assert.strictEqual(result.copySync(), 1);
+	});
+	it('TP-5: Multiple executions on same sandbox', () => {
+		const sandbox = new Sandbox();
+		const result1 = sandbox.run('var x = 10; x');
+		const result2 = sandbox.run('x * 2');
+		assert.strictEqual(result1.copySync(), 10);
+		assert.strictEqual(result2.copySync(), 20);
+	});
+	it('TP-6: Deterministic behavior - Math.random is deleted', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('typeof Math.random');
+		assert.strictEqual(result.copySync(), 'undefined');
+	});
+	it('TP-7: Deterministic behavior - Date is deleted', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('typeof Date');
+		assert.strictEqual(result.copySync(), 'undefined');
+	});
+	it('TP-8: Blocked API - WebAssembly is undefined', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('typeof WebAssembly');
+		assert.strictEqual(result.copySync(), 'undefined');
+	});
+	it('TP-9: Blocked API - fetch is undefined', () => {
+		const sandbox = new Sandbox();
+		const result = sandbox.run('typeof fetch');
+		assert.strictEqual(result.copySync(), 'undefined');
+	});
+	it('TP-10: isReference method correctly identifies VM References', () => {
+		const sandbox = new Sandbox();
+		const vmRef = sandbox.run('42');
+		const nativeValue = 42;
+		assert.ok(sandbox.isReference(vmRef));
+		assert.ok(!sandbox.isReference(nativeValue));
+	});
+	it('TN-1: isReference returns false for null', () => {
+		const sandbox = new Sandbox();
+		assert.ok(!sandbox.isReference(null));
+	});
+	it('TN-2: isReference returns false for undefined', () => {
+		const sandbox = new Sandbox();
+		assert.ok(!sandbox.isReference(undefined));
+	});
+	it('TN-3: isReference returns false for regular objects', () => {
+		const sandbox = new Sandbox();
+		assert.ok(!sandbox.isReference({}));
+		assert.ok(!sandbox.isReference([]));
+		assert.ok(!sandbox.isReference('string'));
+	});
+});
