@@ -5,7 +5,7 @@ import {getCalleeName} from '../utils/getCalleeName.js';
 import {isNodeInRanges} from '../utils/isNodeInRanges.js';
 import {createOrderedSrc} from '../utils/createOrderedSrc.js';
 import {getDeclarationWithContext} from '../utils/getDeclarationWithContext.js';
-import {badValue, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
+import {BAD_VALUE, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
 
 const VALID_UNWRAP_TYPES = ['Literal', 'Identifier'];
 const CACHE_LIMIT = 100;
@@ -109,7 +109,7 @@ export function resolveLocalCallsTransform(arb, matches) {
 		// Cache management for performance
 		const cacheName = `rlc-${callee.name || callee.value}-${declNode?.nodeId}`;
 		if (!cache[cacheName]) {
-			cache[cacheName] = badValue;
+			cache[cacheName] = BAD_VALUE;
 			
 			// Skip problematic callee types that shouldn't be evaluated
 			if (SKIP_IDENTIFIERS.includes(callee.name) ||
@@ -134,9 +134,9 @@ export function resolveLocalCallsTransform(arb, matches) {
 		// Evaluate call expression in appropriate context
 		const contextVM = cache[cacheName];
 		const nodeSrc = createOrderedSrc([c]);
-		const replacementNode = contextVM === badValue ? evalInVm(nodeSrc) : evalInVm(nodeSrc, contextVM);
+		const replacementNode = contextVM === BAD_VALUE ? evalInVm(nodeSrc) : evalInVm(nodeSrc, contextVM);
 		
-		if (replacementNode !== badValue && replacementNode.type !== 'FunctionDeclaration' && replacementNode.name !== 'undefined') {
+		if (replacementNode !== BAD_VALUE && replacementNode.type !== 'FunctionDeclaration' && replacementNode.name !== 'undefined') {
 			// Anti-debugging protection: avoid resolving function toString that might trigger detection
 			if (c.callee.type === 'MemberExpression' && 
 				(c.callee.property?.name || c.callee.property?.value) === 'toString' &&

@@ -1,5 +1,5 @@
 import {Sandbox} from './sandbox.js';
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {getObjType} from './getObjType.js';
 import {generateHash} from './generateHash.js';
 import {createNewNode} from './createNewNode.js';
@@ -34,13 +34,13 @@ const maxCacheSize = 100;
  * Eval a string in an ~isolated~ environment
  * @param {string} stringToEval
  * @param {Sandbox} [sb] (optional) an existing sandbox loaded with context.
- * @return {ASTNode|string} A node based on the eval result if successful; badValue string otherwise.
+ * @return {ASTNode|string} A node based on the eval result if successful; BAD_VALUE string otherwise.
  */
 function evalInVm(stringToEval, sb) {
 	const cacheName = `eval-${generateHash(stringToEval)}`;
 	if (cache[cacheName] === undefined) {
 		if (Object.keys(cache).length >= maxCacheSize) cache = {};
-		cache[cacheName] = badValue;
+		cache[cacheName] = BAD_VALUE;
 		try {
 			// Break known trap strings
 			for (let i = 0; i < trapStrings.length; i++) {

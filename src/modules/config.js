@@ -1,26 +1,27 @@
 // Arguments that shouldn't be touched since the context may not be inferred during deobfuscation.
-const badArgumentTypes = ['ThisExpression'];
+const BAD_ARGUMENT_TYPES = ['ThisExpression'];
 
 // A string that tests true for this regex cannot be used as a variable name.
-const badIdentifierCharsRegex = /([:!@#%^&*(){}[\]\\|/`'"]|[^\da-zA-Z_$])/;
+const BAD_IDENTIFIER_CHARS_REGEX = /([:!@#%^&*(){}[\]\\|/`'"]|[^\da-zA-Z_$])/;
 
 // Internal value used to indicate eval failed
-const badValue = '--BAD-VAL--';
+const BAD_VALUE = '--BAD-VAL--';
 
 // Do not repeate more than this many iterations.
 // Behaves like a number, but decrements each time it's used.
-// Use defaultMaxIterations.value = 300 to set a new value.
-const defaultMaxIterations = {
+// Use DEFAULT_MAX_ITERATIONS.value = 300 to set a new value.
+const DEFAULT_MAX_ITERATIONS = {
 	value: 500,
 	valueOf() {return this.value--;},
 };
 
-const propertiesThatModifyContent = [
-	'push', 'forEach', 'pop', 'insert', 'add', 'set', 'delete', 'shift', 'unshift', 'splice'
+const PROPERTIES_THAT_MODIFY_CONTENT = [
+	'push', 'forEach', 'pop', 'insert', 'add', 'set', 'delete', 'shift', 'unshift', 'splice',
+	'sort', 'reverse', 'fill', 'copyWithin'
 ];
 
 // Builtin functions that shouldn't be resolved in the deobfuscation context.
-const skipBuiltinFunctions = [
+const SKIP_BUILTIN_FUNCTIONS = [
 	'Function', 'eval', 'Array', 'Object', 'fetch', 'XMLHttpRequest', 'Promise', 'console', 'performance', '$',
 ];
 
@@ -33,20 +34,20 @@ const SKIP_IDENTIFIERS = [
 // Properties that shouldn't be resolved since they're either based on context which can't be determined or resolve inconsistently.
 const SKIP_PROPERTIES = [
 	'test', 'exec', 'match', 'length', 'freeze', 'call', 'apply', 'create', 'getTime', 'now',
-	'getMilliseconds', ...propertiesThatModifyContent,
+	'getMilliseconds', ...PROPERTIES_THAT_MODIFY_CONTENT,
 ];
 
 // A regex for a valid identifier name.
-const validIdentifierBeginning = /^[A-Za-z$_]/;
+const VALID_IDENTIFIER_BEGINNING = /^[A-Za-z$_]/;
 
 export {
-	badArgumentTypes,
-	badIdentifierCharsRegex,
-	badValue,
-	defaultMaxIterations,
-	propertiesThatModifyContent,
-	skipBuiltinFunctions,
+	BAD_ARGUMENT_TYPES,
+	BAD_IDENTIFIER_CHARS_REGEX,
+	BAD_VALUE,
+	DEFAULT_MAX_ITERATIONS,
+	PROPERTIES_THAT_MODIFY_CONTENT,
+	SKIP_BUILTIN_FUNCTIONS,
 	SKIP_IDENTIFIERS,
 	SKIP_PROPERTIES,
-	validIdentifierBeginning,
+	VALID_IDENTIFIER_BEGINNING,
 };

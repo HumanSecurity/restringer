@@ -34,7 +34,7 @@ export class REstringer {
 		this._preprocessors = [];
 		this._postprocessors = [];
 		this.logger.setLogLevelLog();
-		this.maxIterations = config.defaultMaxIterations;
+		this.maxIterations = config.DEFAULT_MAX_ITERATIONS;
 		this.detectObfuscationType = true;
 		// Deobfuscation methods that don't use eval
 		this.safeMethods = [

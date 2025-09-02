@@ -1,4 +1,4 @@
-import {badIdentifierCharsRegex, validIdentifierBeginning} from '../config.js';
+import {BAD_IDENTIFIER_CHARS_REGEX, VALID_IDENTIFIER_BEGINNING} from '../config.js';
 
 // Node types that use 'key' property instead of 'property' for computed access
 const relevantTypes = ['MethodDefinition', 'Property'];
@@ -24,8 +24,8 @@ export function normalizeComputedMatch(arb, candidateFilter = () => true) {
 							// or those having another variable reference as their property like window[varHoldingFuncName]
 			(((n.type === 'MemberExpression' &&
 				n.property.type === 'Literal' &&
-				validIdentifierBeginning.test(n.property.value) &&
-				!badIdentifierCharsRegex.test(n.property.value)) ||
+				VALID_IDENTIFIER_BEGINNING.test(n.property.value) &&
+				!BAD_IDENTIFIER_CHARS_REGEX.test(n.property.value)) ||
 			/**
 			 * Ignore the same cases for method names and object properties, for example
 			 * class A {
@@ -39,8 +39,8 @@ export function normalizeComputedMatch(arb, candidateFilter = () => true) {
 			 */
 			(relevantTypes.includes(n.type) &&
 				n.key.type === 'Literal' &&
-				validIdentifierBeginning.test(n.key.value) &&
-				!badIdentifierCharsRegex.test(n.key.value))) &&
+				VALID_IDENTIFIER_BEGINNING.test(n.key.value) &&
+				!BAD_IDENTIFIER_CHARS_REGEX.test(n.key.value))) &&
 			candidateFilter(n))) {
 			matchingNodes.push(n);
 		}

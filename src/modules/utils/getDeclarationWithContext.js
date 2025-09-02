@@ -1,7 +1,7 @@
 import {getCache} from './getCache.js';
 import {generateHash} from './generateHash.js';
 import {isNodeInRanges} from './isNodeInRanges.js';
-import {propertiesThatModifyContent} from '../config.js';
+import {PROPERTIES_THAT_MODIFY_CONTENT} from '../config.js';
 import {doesDescendantMatchCondition} from './doesDescendantMatchCondition.js';
 
 // Types that give no context by themselves
@@ -56,8 +56,8 @@ function isNodeAnAssignmentToProperty(n) {
 			n.parentNode.parentKey === 'left') ||
 		(n.parentKey === 'object' &&
 			(n.parentNode.property.isMarked ||  // Marked references won't be collected
-				// propertiesThatModifyContent - e.g. targetNode.push(value) - changes the value of targetNode
-				propertiesThatModifyContent.includes(n.parentNode.property?.value || n.parentNode.property.name))));
+				// PROPERTIES_THAT_MODIFY_CONTENT - e.g. targetNode.push(value) - changes the value of targetNode
+				PROPERTIES_THAT_MODIFY_CONTENT.includes(n.parentNode.property?.value || n.parentNode.property.name))));
 }
 
 /**

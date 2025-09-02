@@ -1,14 +1,14 @@
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {getObjType} from './getObjType.js';
 import {generateCode, parseCode, logger} from 'flast';
 
 /**
  * Create a node from a value by its type.
  * @param {*} value The value to be parsed into an ASTNode.
- * @returns {ASTNode|badValue} The newly created node if successful; badValue string otherwise.
+ * @returns {ASTNode|BAD_VALUE} The newly created node if successful; BAD_VALUE string otherwise.
  */
 function createNewNode(value) {
-	let newNode = badValue;
+	let newNode = BAD_VALUE;
 	try {
 		if (![undefined, null].includes(value) && value.__proto__.constructor.name === 'Node') value = generateCode(value);
 		switch (getObjType(value)) {
@@ -63,7 +63,7 @@ function createNewNode(value) {
 				for (const [k, v] of Object.entries(value)) {
 					const key = createNewNode(k);
 					const val = createNewNode(v);
-					if ([key, val].includes(badValue)) {
+					if ([key, val].includes(BAD_VALUE)) {
 						// noinspection ExceptionCaughtLocallyJS
 						throw Error();
 					}

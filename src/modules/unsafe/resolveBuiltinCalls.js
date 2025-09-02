@@ -1,10 +1,10 @@
 import {logger} from 'flast';
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createNewNode} from '../utils/createNewNode.js';
 import * as safeImplementations from '../utils/safeImplementations.js';
-import {skipBuiltinFunctions, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
+import {SKIP_BUILTIN_FUNCTIONS, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
 
 const AVAILABLE_SAFE_IMPLEMENTATIONS = Object.keys(safeImplementations);
 
@@ -42,14 +42,14 @@ export function resolveBuiltinCallsMatch(arb, candidateFilter = () => true) {
 		else if (n.type === 'CallExpression' && !n.arguments.some(a => a.type !== 'Literal')) {
 			// Check if callee is builtin identifier
 			if (n.callee.type === 'Identifier' && !n.callee.declNode && 
-				!skipBuiltinFunctions.includes(n.callee.name)) {
+				!SKIP_BUILTIN_FUNCTIONS.includes(n.callee.name)) {
 				matches.push(n);
 				continue;
 			}
 			
 			// Check if callee is builtin member expression
 			if (n.callee.type === 'MemberExpression' && !n.callee.object.declNode &&
-				!skipBuiltinFunctions.includes(n.callee.object?.name) &&
+				!SKIP_BUILTIN_FUNCTIONS.includes(n.callee.object?.name) &&
 				!SKIP_IDENTIFIERS.includes(n.callee.object?.name) &&
 				!SKIP_PROPERTIES.includes(n.callee.property?.name || n.callee.property?.value)) {
 				matches.push(n);
@@ -80,7 +80,7 @@ export function resolveBuiltinCallsTransform(arb, n, sharedSb) {
 		} else {
 			// Evaluate unknown builtin calls in sandbox
 			const replacementNode = evalInVm(n.src, sharedSb);
-			if (replacementNode !== badValue) arb.markNode(n, replacementNode);
+			if (replacementNode !== BAD_VALUE) arb.markNode(n, replacementNode);
 		}
 	} catch (e) {
 		logger.debug(e.message);

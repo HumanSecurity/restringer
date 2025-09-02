@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import assert from 'node:assert';
-import {describe, it, beforeEach} from 'node:test';
-import {badValue} from '../src/modules/config.js';
 import {generateFlatAST} from 'flast';
+import {describe, it, beforeEach} from 'node:test';
+import {BAD_VALUE} from '../src/modules/config.js';
 
 describe('UTILS: evalInVm', async () => {
 	const targetModule = (await import('../src/modules/utils/evalInVm.js')).evalInVm;
@@ -14,13 +14,13 @@ describe('UTILS: evalInVm', async () => {
 	});
 	it('TN-1', () => {
 		const code = `Math.random();`;
-		const expected = badValue;
+		const expected = BAD_VALUE;
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
 	});
 	it('TN-2', () => {
 		const code = `function a() {return console;} a();`;
-		const expected = badValue;
+		const expected = BAD_VALUE;
 		const result = targetModule(code);
 		assert.deepStrictEqual(result, expected);
 	});
@@ -152,7 +152,7 @@ describe('UTILS: createNewNode', async () => {
 	});
 	it('Object: populated with BadValue', () => {
 		const code = {a() {}};
-		const expected = badValue;
+		const expected = BAD_VALUE;
 		const result = targetModule(code);
 		assert.deepEqual(result, expected);
 	});

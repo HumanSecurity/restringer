@@ -1,4 +1,4 @@
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {canUnaryExpressionBeResolved} from '../utils/canUnaryExpressionBeResolved.js';
@@ -52,7 +52,7 @@ export function normalizeRedundantNotOperatorMatch(arb, candidateFilter = () => 
 export function normalizeRedundantNotOperatorTransform(arb, n, sharedSandbox) {
 	const replacementNode = evalInVm(n.src, sharedSandbox);
 	
-	if (replacementNode !== badValue) {
+	if (replacementNode !== BAD_VALUE) {
 		arb.markNode(n, replacementNode);
 	}
 	

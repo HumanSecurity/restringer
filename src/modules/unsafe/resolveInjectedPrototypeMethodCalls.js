@@ -1,5 +1,5 @@
 import {logger} from 'flast';
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createOrderedSrc} from '../utils/createOrderedSrc.js';
@@ -76,7 +76,7 @@ export function resolveInjectedPrototypeMethodCallsTransform(arb, matches) {
 					
 					// Evaluate the method call in the prepared context
 					const replacementNode = evalInVm(`\n${createOrderedSrc([callNode])}`, contextSb);
-					if (replacementNode !== badValue) {
+					if (replacementNode !== BAD_VALUE) {
 						arb.markNode(callNode, replacementNode);
 					}
 				}

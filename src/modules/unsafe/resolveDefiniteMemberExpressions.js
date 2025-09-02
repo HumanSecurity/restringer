@@ -1,4 +1,4 @@
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 
@@ -64,7 +64,7 @@ export function resolveDefiniteMemberExpressionsTransform(arb, matches) {
 		const n = matches[i];
 		const replacementNode = evalInVm(n.src, sharedSb);
 		
-		if (replacementNode !== badValue) {
+		if (replacementNode !== BAD_VALUE) {
 			arb.markNode(n, replacementNode);
 		}
 	}

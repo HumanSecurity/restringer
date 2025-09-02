@@ -1,4 +1,4 @@
-import {badValue} from '../config.js';
+import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {doesBinaryExpressionContainOnlyLiterals} from '../utils/doesBinaryExpressionContainOnlyLiterals.js';
@@ -40,7 +40,7 @@ export function resolveDefiniteBinaryExpressionsTransform(arb, matches) {
 		const n = matches[i];
 		const replacementNode = evalInVm(n.src, sharedSb);
 		
-		if (replacementNode !== badValue) {
+		if (replacementNode !== BAD_VALUE) {
 			try {
 				// Handle negative number edge case: when evaluating expressions like '5 - 10',
 				// the result may be a UnaryExpression with '-5' instead of a Literal with value -5.
