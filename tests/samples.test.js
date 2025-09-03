@@ -80,7 +80,7 @@ describe('Samples tests', () => {
 		assert.strictEqual(result, expected);
 	});
 	it('Deobfuscate sample: Obfuscator.io', () => {
-		const sampleFilename = join(cwd, resourcePath, 'obfuscatorIo.js');
+		const sampleFilename = join(cwd, resourcePath, 'obfuscator.io.js');
 		const expectedSolutionFilename = sampleFilename + '-deob.js';
 		const code = readFileSync(sampleFilename, 'utf-8');
 		const expected  = readFileSync(expectedSolutionFilename, 'utf-8');

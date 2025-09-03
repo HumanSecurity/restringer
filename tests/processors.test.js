@@ -293,7 +293,7 @@ describe('Processors tests: Function to Array', async () => {
 	});
 });
 describe('Processors tests: Obfuscator.io', async () => {
-	const targetProcessors = (await import('../src/processors/obfuscatorIo.js'));
+	const targetProcessors = (await import('../src/processors/obfuscator.io.js'));
 	it('TP-1', () => {
 		const code = `var a = {
   'removeCookie': function () {

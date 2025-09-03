@@ -18,7 +18,7 @@ Processor specifics can always be found in comments in the code.
 * [Augmented Arrays](src/processors/augmentedArray.js) <br/> 
   - Preprocessor:
     - Augments the array once to avoid repeating the same action.
-* [Obfuscator.io](src/processors/obfuscatorIo.js) <br/> 
+* [Obfuscator.io](src/processors/obfuscator.io.js) <br/> 
   - Preprocessor:
     - Removes anti-debugging embedded in the code, and applies the augmented array processors.
 * [Function to Array](src/processors/functionToArray.js) <br/> 
