@@ -256,9 +256,37 @@ describe('Processors tests: Function to Array', async () => {
 		arb = applyProcessors(arb, targetProcessors);
 		assert.strictEqual(arb.script, expected);
 	});
-	it('TN-1', () => {
+	it('TP-3: Arrow function returning array', () => {
+		const code = `const getItems = () => ['x', 'y', 'z']; const items = getItems(); console.log(items[0]);`;
+		const expected = `const getItems = () => [\n  'x',\n  'y',\n  'z'\n];\nconst items = [\n  'x',\n  'y',\n  'z'\n];\nconsole.log(items[0]);`;
+		let arb = new Arborist(code);
+		arb = applyProcessors(arb, targetProcessors);
+		assert.strictEqual(arb.script, expected);
+	});
+	it('TP-4: Multiple variables with array access only', () => {
+		const code = `function getData() {return [1, 2, 3]} const x = getData(); const y = getData(); console.log(x[0], y[1]);`;
+		const expected = `function getData() {\n  return [\n    1,\n    2,\n    3\n  ];\n}\nconst x = [\n  1,\n  2,\n  3\n];\nconst y = [\n  1,\n  2,\n  3\n];\nconsole.log(x[0], y[1]);`;
+		let arb = new Arborist(code);
+		arb = applyProcessors(arb, targetProcessors);
+		assert.strictEqual(arb.script, expected);
+	});
+	it('TN-1: Function called multiple times without assignment', () => {
 		const code = `function getArr() {return ['One', 'Two', 'Three']} console.log(getArr()[0] + ' + ' + getArr()[1] + ' = ' + getArr()[2]);`;
 		const expected  = code;
+		let arb = new Arborist(code);
+		arb = applyProcessors(arb, targetProcessors);
+		assert.strictEqual(arb.script, expected);
+	});
+	it('TN-2: Mixed usage (array access and other)', () => {
+		const code = `function getArr() {return ['a', 'b', 'c']} const data = getArr(); console.log(data[0], data.length, data.slice(1));`;
+		const expected = code;
+		let arb = new Arborist(code);
+		arb = applyProcessors(arb, targetProcessors);
+		assert.strictEqual(arb.script, expected);
+	});
+	it('TN-3: Variable not assigned function call', () => {
+		const code = `const arr = ['static', 'array']; console.log(arr[0], arr[1]);`;
+		const expected = code;
 		let arb = new Arborist(code);
 		arb = applyProcessors(arb, targetProcessors);
 		assert.strictEqual(arb.script, expected);
