@@ -1,150 +1,387 @@
-# Contributing
+# Contributing to REstringer
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+Thank you for your interest in contributing to REstringer! This guide covers everything you need to know about contributing to the project.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+## Table of Contents
 
-## Pull Request Process
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Development Setup](#development-setup)
+  - [Running Tests](#running-tests)
+- [Contribution Process](#contribution-process)
+  - [General Guidelines](#general-guidelines)
+  - [Code Standards](#code-standards)
+  - [Testing Requirements](#testing-requirements)
+- [Module Development](#module-development)
+  - [Module Architecture](#module-architecture)
+  - [Match/Transform Pattern](#matchtransform-pattern)
+  - [Performance Requirements](#performance-requirements)
+  - [Documentation Standards](#documentation-standards)
+- [Processor Development](#processor-development)
+  - [Processor Architecture](#processor-architecture)
+  - [Development Guidelines](#development-guidelines)
+  - [Testing Processors](#testing-processors)
+- [Code Quality](#code-quality)
+  - [Naming Conventions](#naming-conventions)
+  - [Error Handling](#error-handling)
+  - [Memory Management](#memory-management)
+- [Testing Guidelines](#testing-guidelines)
+  - [Test Categories](#test-categories)
+  - [Test Organization](#test-organization)
+  - [Running Tests](#running-tests-1)
+- [Documentation](#documentation)
+  - [JSDoc Requirements](#jsdoc-requirements)
+  - [README Updates](#readme-updates)
+- [Submission Guidelines](#submission-guidelines)
+  - [Pull Request Process](#pull-request-process)
+  - [Review Checklist](#review-checklist)
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a
-   build.
-2. Update the README.md with details of changes to the interface, this includes new environment
-   variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this
-   Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you
-   do not have permission to do that, you may request the second reviewer to merge it for you.
+---
 
-## Code of Conduct
+## Getting Started
 
-### Our Pledge
+### Prerequisites
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, caste, color, religion, or sexual identity
-and orientation.
+- **Node.js v18+** (v22+ recommended)
+- **npm** (latest stable version)
+- **Git** for version control
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+### Development Setup
 
-### Our Standards
+1. Fork the repository on GitHub
+2. Clone your fork locally:
+   ```bash
+   git clone https://github.com/your-username/restringer.git
+   cd restringer
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Create a feature branch:
+   ```bash
+   git checkout -b feature-name
+   ```
 
-Examples of behavior that contributes to a positive environment for our
-community include:
+### Running Tests
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the
-  overall community
+```bash
+# Full test suite with sample files
+npm test
 
-Examples of unacceptable behavior include:
+# Quick test suite (recommended for development)
+npm run test:quick
 
-* The use of sexualized language or imagery, and sexual attention or
-  advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email
-  address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+# Watch mode during development (quick tests)
+npm run test:quick:watch
+```
 
-### Enforcement Responsibilities
+---
 
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
+## Contribution Process
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+### General Guidelines
 
-### Scope
+1. **Follow project conventions** - Maintain consistency with existing code style and patterns
+2. **Focus on quality over quantity** - Well-tested, documented improvements are preferred over large changes
+3. **Be respectful** - Follow the code of conduct and be considerate in discussions
+4. **Start small** - Begin with small improvements to familiarize yourself with the codebase
+5. **Ask questions** - Don't hesitate to open an issue for clarification or discussion before starting work
+6. **Test thoroughly** - Use the `test:quick` option to validate code while working, but always run the full test suite and add tests for new functionality before proceeding to submit the code
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+### Code Standards
 
-### Enforcement
+- **Prefer `const` and `let`** - Avoid using `var` as much as possible
+- **Single quotes** - Use single quotes for strings (use backticks if string contains single quotes)
+- **2 spaces for indentation** - If file uses tabs, maintain tabs
+- **Match existing style** - Always try to match existing style when adding or changing code
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[ben.baryo@humansecurity.com](mailto:ben.baryo@humansecurity.com).
-All complaints will be reviewed and investigated promptly and fairly.
+### Testing Requirements
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+- **Add tests for new functionality** - Include both positive (TP) and negative (TN) test cases
+- **Maintain test coverage** - Ensure comprehensive coverage for edge cases
+- **Run appropriate test suite** - Use `npm run test:quick` during development, `npm test` for full validation
+- **Watch for regressions** - Changes to one module could affect other parts of the system
 
-### Enforcement Guidelines
+---
 
-Community leaders will follow these Community Impact Guidelines in determining
-the consequences for any action they deem in violation of this Code of Conduct:
+## Module Development
 
-#### 1. Correction
+### Module Architecture
 
-**Community Impact**: Use of inappropriate language or other behavior deemed
-unprofessional or unwelcome in the community.
+All modules must follow the **match/transform pattern**:
 
-**Consequence**: A private, written warning from community leaders, providing
-clarity around the nature of the violation and an explanation of why the
-behavior was inappropriate. A public apology may be requested.
+```javascript
+// Match function - identifies target nodes
+export function moduleNameMatch(arb, candidateFilter = () => true) {
+  const matches = [];
+  const candidates = arb.ast[0].typeMap.TargetNodeType
+                        .concat(arb.ast[0].typeMap.AnotherTargetNodeType);
+  
+  for (let i = 0; i < candidates.length; i++) {
+    const node = candidates[i];
+    if (matchesCriteria(node) && candidateFilter(node)) {
+      matches.push(node);
+    }
+  }
+  return matches;
+}
 
-#### 2. Warning
+// Transform function - modifies matched nodes
+export function moduleNameTransform(arb, node) {
+  // Apply transformations
+  performTransformation(node);
+  return arb; // Must explicitly return arb
+}
 
-**Community Impact**: A violation through a single incident or series
-of actions.
+// Main function - orchestrates match and transform
+export default function moduleName(arb, candidateFilter = () => true) {
+  const matches = moduleNameMatch(arb, candidateFilter);
+  
+  for (let i = 0; i < matches.length; i++) {
+    arb = moduleNameTransform(arb, matches[i]); // Capture returned arb
+  }
+  return arb;
+}
+```
 
-**Consequence**: A warning with consequences for continued behavior. No
-interaction with the people involved, including unsolicited interaction with
-those enforcing the Code of Conduct, for a specified period of time. This
-includes avoiding interactions in community spaces as well as external channels
-like social media. Violating these terms may lead to a temporary or
-permanent ban.
+### Match/Transform Pattern
 
-#### 3. Temporary Ban
+- **Separate matching logic** - Create `moduleNameMatch(arb, candidateFilter = () => true)` function
+- **Separate transformation logic** - Create `moduleNameTransform(arb, node)` function  
+- **Main function orchestration** - Main function calls match, then iterates and transforms
+- **Explicit arb returns** - All transform functions must return `arb` explicitly, even though the transformation can be considered a side-effect
+- **Capture returned arb** - Main functions must use `arb = transformFunction(arb, node)`
 
-**Community Impact**: A serious violation of community standards, including
-sustained inappropriate behavior.
+### Performance Requirements
 
-**Consequence**: A temporary ban from any sort of interaction or public
-communication with the community for a specified period of time. No public or
-private interaction with the people involved, including unsolicited interaction
-with those enforcing the Code of Conduct, is allowed during this period.
-Violating these terms may lead to a permanent ban.
+#### Loop Optimization
+- **Traditional for loops** - Prefer `for (let i = 0; i < length; i++)` over `for..of` or `for..in` 
+- **Use 'i' variable** - Use `i` for iteration variable unless inside nested scope
 
-#### 4. Permanent Ban
+#### Memory & Allocation Optimization
+- **Extract static arrays/sets** - Move static collections outside functions to avoid recreation overhead
+- **Array operations** - Use `.concat()` for array concatenation and `.slice()` for array copying
+- **Object cloning** - Use spread operators `{ ...obj }` for AST node cloning
 
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behavior,  harassment of an
-individual, or aggression toward or disparagement of classes of individuals.
+### Documentation Standards
 
-**Consequence**: A permanent ban from any sort of public interaction within
-the community.
+#### JSDoc Requirements
+- **Comprehensive function docs** - All exported functions need full JSDoc
+- **Specific types** - Use `{ASTNode}` and `{ASTNode[]}` instead of generic `{Object}` and `{Array}`
+- **Custom object types** - Use `{Object[]}` for arrays of custom objects
+- **Parameter documentation** - Document all parameters with types
+- **Return value documentation** - Document what functions return
+- **Algorithm explanations** - Explain complex algorithms and their purpose
 
-### Attribution
+#### Inline Comments
+- **NON-TRIVIAL ONLY** - Only add comments that explain complex logic and reason, never obvious statements
+- **Algorithm steps** - Break down multi-step processes
+- **Safety warnings** - Note any potential issues or limitations
+- **Examples** - Include before/after transformation examples where helpful
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available at
-[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html][v2.0].
+---
 
-Community Impact Guidelines were inspired by
-[Mozilla's code of conduct enforcement ladder][Mozilla CoC].
+## Processor Development
 
-For answers to common questions about this code of conduct, see the FAQ at
-[https://www.contributor-covenant.org/faq][FAQ]. Translations are available
-at [https://www.contributor-covenant.org/translations][translations].
+### Processor Architecture
 
-[homepage]: https://www.contributor-covenant.org
-[v2.0]: https://www.contributor-covenant.org/version/2/0/code_of_conduct.html
-[Mozilla CoC]: https://github.com/mozilla/diversity
-[FAQ]: https://www.contributor-covenant.org/faq
-[translations]: https://www.contributor-covenant.org/translations
+Processors export **preprocessors** and **postprocessors** arrays:
+
+```javascript
+// Processor function - can be written as a single function
+function myProcessorLogic(arb, candidateFilter = () => true) {
+  const candidates = arb.ast[0].typeMap.TargetNodeType
+                        .concat(arb.ast[0].typeMap.AnotherTargetNodeType);
+  
+  for (let i = 0; i < candidates.length; i++) {
+    const node = candidates[i];
+    if (matchesCriteria(node) && candidateFilter(node)) {
+      // Apply transformation directly
+      performTransformation(node);
+    }
+  }
+  return arb;
+}
+
+// Processors export arrays of functions, not a default export
+export const preprocessors = [myProcessorLogic];
+export const postprocessors = [];
+```
+
+### Development Guidelines
+
+1. **Follow match/transform pattern** for consistency (optional for processors)
+2. **Extract static patterns** for performance  
+3. **Add comprehensive tests** (TP/TN cases)
+4. **Document obfuscation patterns** in code comments
+5. **Use performance optimizations** (typeMap access, efficient loops)
+
+### Testing Processors
+
+#### Test Structure
+**NOTE**: Preprocessors and postprocessors must be applied separately—never run preprocessors after postprocessors. Do not combine both arrays in a single `applyIteratively` call, as this would incorrectly apply preprocessors after postprocessors.
+
+```javascript
+import assert from 'node:assert';
+import {describe, it} from 'node:test';
+import {applyIteratively} from 'flast';
+
+describe('Custom Processor Tests', async () => {
+  const targetProcessors = await import('./customProcessor.js');
+  
+  it('TP-1: Should transform basic pattern', () => {
+    const code = `/* obfuscated pattern */`;
+    const expected = `/* expected result */`;
+    
+    // Apply preprocessors
+    let script = applyIteratively(code, targetProcessors.preprocessors);
+    // Apply postprocessors  
+    script = applyIteratively(script, targetProcessors.postprocessors);
+    
+    assert.strictEqual(script, expected);
+  });
+  
+  it('TN-1: Should not transform invalid pattern', () => {
+    const code = `/* non-matching pattern */`;
+    const originalScript = code;
+    
+    // Apply preprocessors
+    let script = applyIteratively(code, targetProcessors.preprocessors);
+    // Apply postprocessors
+    script = applyIteratively(script, targetProcessors.postprocessors);
+    
+    assert.strictEqual(script, originalScript);
+  });
+});
+```
+
+---
+
+## Code Quality
+
+### Naming Conventions
+
+- **Variable naming** - Prefer `n` over `node` for AST node variables
+- **Iteration variables** - Use `i` for loop iteration unless already used in nested scope
+- **Constants** - Use ALL_CAPS for static constants
+- **Function names** - Clear, descriptive names that indicate purpose
+
+### Error Handling
+
+- **Input validation** - Add appropriate null/undefined checks
+- **Infinite loop protection** - Implement safeguards for recursive operations
+- **Graceful degradation** - Handle edge cases without breaking functionality
+
+### Memory Management
+
+- **Cache management** - Implement appropriate caching strategies
+- **Static extractions** - Extract static arrays/sets outside functions
+- **Efficient data structures** - Use Sets for large collections, arrays for small ones
+
+---
+
+## Testing Guidelines
+
+### Test Categories
+
+- **TP (True Positive)** - Cases where transformation should occur
+- **TN (True Negative)** - Cases where transformation should NOT occur
+- **Edge Cases** - Boundary conditions and unusual inputs
+- **Different operand types** - Test all relevant AST node types as operands
+
+### Test Organization
+
+- **Clear naming** - Use descriptive test names that explain what's being tested
+- **Comprehensive scenarios** - Cover simple cases, complex cases, and edge cases
+- **Proper assertions** - Ensure expected results match actual behavior
+
+### Running Tests
+
+- **Full test suite** - Always run complete test suite
+- **Review all output** - Changes to one module could affect other parts of the system
+- **Watch for regressions** - Ensure no existing functionality is broken
+
+---
+
+## Documentation
+
+### JSDoc Requirements
+
+- **Function documentation** - All exported functions need comprehensive JSDoc
+- **Type specifications** - Use specific types like `{ASTNode}` instead of generic `{Object}`
+- **Parameter descriptions** - Document all parameters with types and purpose
+- **Return documentation** - Clearly describe what functions return
+- **Examples** - Include usage examples for complex functions
+
+### README Updates
+
+- **Keep documentation current** - Update relevant READMEs when adding new features
+- **Add examples** - Include practical usage examples
+- **Link to related documentation** - Reference other relevant docs
+
+---
+
+## Submission Guidelines
+
+### Pull Request Process
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature-name`
+3. **Make changes** following the coding standards outlined above
+4. **Add comprehensive tests** for new functionality
+5. **Update documentation** as needed
+6. **Run the full test suite**: `npm test`
+7. **Submit a pull request** with a clear description
+
+### Review Checklist
+
+#### For Modules:
+- [ ] Follows match/transform pattern
+- [ ] Includes comprehensive JSDoc documentation
+- [ ] Has static pattern extraction for performance
+- [ ] Uses traditional for loops with proper variable naming
+- [ ] Includes both TP and TN test cases
+- [ ] No obvious or trivial comments
+- [ ] Explicit `arb` returns and proper functional flow
+
+#### For Processors:
+- [ ] Exports `preprocessors` and `postprocessors` arrays
+- [ ] Follows architectural patterns (when applicable)
+- [ ] Comprehensive test coverage added
+- [ ] JSDoc documentation for all functions  
+- [ ] Performance optimizations implemented
+- [ ] Integration tests with main pipeline
+
+#### General Requirements:
+- [ ] All tests pass without failures
+- [ ] No regressions in existing functionality
+- [ ] Code follows project style guidelines
+- [ ] Documentation is updated appropriately
+- [ ] Commit messages are clear and descriptive
+
+### Commit Message Guidelines
+
+- **Focus on changes** - Describe what was changed, improved, or added
+- **Be concise** - Keep commit messages focused and descriptive
+
+---
+
+## Getting Help
+
+- 💬 **GitHub Issues** - Ask questions or report issues
+- 🐦 **Twitter / X** - Reach out to Ben Baryo [@ctrl__esc](https://twitter.com/ctrl__esc)
+- 📖 **Documentation** - Check the [main README](README.md) and [processors guide](src/processors/README.md)
+
+---
+
+## Resources
+
+- 🔍 [Obfuscation Detector](https://github.com/HumanSecurity/obfuscation-detector) - Pattern recognition system
+- 🌳 [flAST Documentation](https://github.com/HumanSecurity/flast) - AST manipulation utilities  
+- 📖 [Main README](README.md) - Complete project documentation
+- 📖 [Processors Guide](src/processors/README.md) - Detailed processor documentation
+
+---
+
+**Made with ❤️ by [HUMAN Security](https://www.HumanSecurity.com/)**
