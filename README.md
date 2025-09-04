@@ -1,219 +1,372 @@
-# Restringer
-[![Node.js CI](https://github.com/PerimeterX/restringer/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/PerimeterX/restringer/actions/workflows/node.js.yml)
+# REstringer
+
+[![Node.js CI](https://github.com/HumanSecurity/restringer/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/HumanSecurity/restringer/actions/workflows/node.js.yml)
 [![Downloads](https://img.shields.io/npm/dm/restringer.svg?maxAge=43200)](https://www.npmjs.com/package/restringer)
+[![npm version](https://badge.fury.io/js/restringer.svg)](https://badge.fury.io/js/restringer)
 
-Deobfuscate Javascript and reconstruct strings.
-Simplify cumbersome logic where possible while adhering to scope limitations.
+**A JavaScript deobfuscation tool that reconstructs strings and simplifies complex logic.**
 
-Try it online @ [restringer.tech](https://restringer.tech).
+REstringer automatically detects obfuscation patterns and applies targeted deobfuscation techniques to restore readable JavaScript code. It handles various obfuscation methods while respecting scope limitations and maintaining code functionality.
 
-For comments and suggestions feel free to open an issue or find me on Twitter - [@ctrl__esc](https://twitter.com/ctrl__esc) 
+🌐 **Try it online**: [restringer.tech](https://restringer.tech)
+
+📧 **Contact**: For questions and suggestions, open an issue or find me on Twitter / X - Ben Baryo - [@ctrl__esc](https://twitter.com/ctrl__esc)
+
+---
 
 ## Table of Contents
-* [Installation](#installation)
-  * [npm](#npm)
-  * [Clone The Repo](#clone-the-repo)
-* [Usage](#usage)
-  * [Command-Line Usage](#command-line-usage) 
-  * [Use as a Module](#use-as-a-module) 
-* [Create Custom Deobfuscators](#create-custom-deobfuscators)
-  * [Boilerplate Code for Starting from Scratch](#boilerplate-code-for-starting-from-scratch)
-* [Read More](#read-more)
-***
 
-## Installation 
-### npm
-```shell
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Command-Line Usage](#command-line-usage)
+  - [Module Usage](#module-usage)
+- [Advanced Usage](#advanced-usage)
+  - [Custom Deobfuscators](#custom-deobfuscators)
+  - [Targeted Processing](#targeted-processing)
+  - [Custom Method Integration](#custom-method-integration)
+- [Architecture](#architecture)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Resources](#resources)
+
+---
+
+## Features
+
+✨ **Automatic Obfuscation Detection**: Uses [Obfuscation Detector](https://github.com/HumanSecurity/obfuscation-detector) to identify specific obfuscation types
+
+🔧 **Modular Architecture**: 40+ deobfuscation modules organized into safe and unsafe categories
+
+🛡️ **Safe Execution**: Unsafe modules use a sandbox [isolated-vm](https://www.npmjs.com/package/isolated-vm) for secure code evaluation
+
+🎯 **Targeted Processing**: Specialized processors for common obfuscators (obfuscator.io, Caesar Plus, etc.)
+
+⚡ **Performance Optimized**: Match/transform patterns and performance improvements throughout
+
+🔍 **Comprehensive Coverage**: Handles string reconstruction, dead code removal, control flow simplification, and more
+
+---
+
+## Installation
+
+### Requirements
+- **Node.js v18+** (v22+ recommended)
+
+### Global Installation (CLI)
+```bash
 npm install -g restringer
 ```
 
-### Clone The Repo
-Requires Node 16 or newer.
-```shell
-git clone git@github.com:PerimeterX/restringer.git
+### Local Installation (Module)
+```bash
+npm install restringer
+```
+
+### Development Installation
+```bash
+git clone https://github.com/HumanSecurity/restringer.git
 cd restringer
 npm install
 ```
 
-***
+---
 
 ## Usage
-The [restringer.js](src/restringer.js) uses generic deobfuscation methods that reconstruct and restore obfuscated strings and simplifies redundant logic meant only to encumber.
-REstringer employs the [Obfuscation Detector](https://github.com/PerimeterX/obfuscation-detector/blob/main/README.md) to identify specific types of obfuscation for which
-there's a need to apply specific deobfuscation methods in order to circumvent anti-debugging mechanisms or other code traps
-preventing the script from being deobfuscated.   
 
 ### Command-Line Usage
+
 ```
 Usage: restringer input_filename [-h] [-c] [-q | -v] [-m M] [-o [output_filename]]
 
 positional arguments:
-	input_filename                  The obfuscated JS file
+  input_filename                  The obfuscated JavaScript file
 
 optional arguments:
-	-h, --help                      Show this help message and exit.
-	-c, --clean                     Remove dead nodes from script after deobfuscation is complete (unsafe).
-	-q, --quiet                     Suppress output to stdout. Output result only to stdout if the -o option is not set.
-									Does not go with the -v option.
-	-m, --max-iterations M          Run at most M iterations
-	-v, --verbose                   Show more debug messages while deobfuscating. Does not go with the -q option.
-	-o, --output [output_filename]  Write deobfuscated script to output_filename. 
-									<input_filename>-deob.js is used if no filename is provided.
+  -h, --help                      Show this help message and exit
+  -c, --clean                     Remove dead nodes after deobfuscation (unsafe)
+  -q, --quiet                     Suppress output to stdout
+  -v, --verbose                   Show debug messages during deobfuscation
+  -m, --max-iterations M          Maximum deobfuscation iterations (must be > 0)
+  -o, --output [filename]         Write output to file (default: <input>-deob.js)
 ```
-Examples:
-- Print the deobfuscated script to stdout.
-  ```shell
-   restringer [target-file.js]
-  ```
-- Save the deobfuscated script to output.js.
-  ```shell
-   restringer [target-file.js] -o output.js
-  ```
-- Deobfuscate and print debug info.
-  ```shell
-   restringer [target-file.js] -v
-  ```
-- Deobfuscate without printing anything but the deobfuscated output.
-  ```shell
-   restringer [target-file.js] -q
-  ```
 
+#### Examples
 
-### Use as a Module
+**Basic deobfuscation** (print to stdout):
+```bash
+restringer obfuscated.js
+```
 
+**Save to specific file**:
+```bash
+restringer obfuscated.js -o clean-code.js
+```
+
+**Verbose output with iteration limit**:
+```bash
+restringer obfuscated.js -v -m 10 -o output.js
+```
+
+**Quiet mode** (no console output):
+```bash
+restringer obfuscated.js -q -o output.js
+```
+
+**Remove dead code** (potentially unsafe):
+```bash
+restringer obfuscated.js -c -o output.js
+```
+
+### Module Usage
+
+#### Basic Example
 ```javascript
 import {REstringer} from 'restringer';
 
-const restringer = new REstringer('"RE" + "stringer"');
+const obfuscatedCode = `
+const _0x4c2a = ['hello', 'world'];
+const _0x3f1b = _0x4c2a[0] + ' ' + _0x4c2a[1];
+console.log(_0x3f1b);
+`;
+
+const restringer = new REstringer(obfuscatedCode);
+
 if (restringer.deobfuscate()) {
+  console.log('✅ Deobfuscation successful!');
   console.log(restringer.script);
+  // Output: console.log('hello world');
 } else {
-  console.log('Nothing was deobfuscated :/');
+  console.log('❌ No changes made');
 }
-// Output: 'REstringer';
 ```
 
-***
-## Create Custom Deobfuscators
-REstringer is highly modularized. It exposes modules that allow creating custom deobfuscators 
-that can solve specific problems.
+#### Advanced Configuration
+```javascript
+import {REstringer} from 'restringer';
 
-The basic structure of such a deobfuscator would be an array of deobfuscation modules 
-(either [safe](src/modules/safe) or [unsafe](src/modules/unsafe)), run via flAST's applyIteratively utility function.
+const restringer = new REstringer(code, {
+  // Configuration options
+  maxIterations: 50,
+  quiet: false
+});
 
-Unsafe modules run code through `eval` (using [isolated-vm](https://www.npmjs.com/package/isolated-vm) to be on the safe side) while safe modules do not.
+// Enable debug logging
+restringer.logger.setLogLevelDebug();
+
+// Disable automatic obfuscation detection
+restringer.detectObfuscationType = false;
+
+// Access deobfuscation statistics
+restringer.deobfuscate();
+console.log(`Iterations: ${restringer.iterations}`);
+console.log(`Changes made: ${restringer.changes}`);
+```
+
+---
+
+## Advanced Usage
+
+### Custom Deobfuscators
+
+Create targeted deobfuscators using REstringer's modular system:
 
 ```javascript
 import {applyIteratively} from 'flast';
 import {safe, unsafe} from 'restringer';
-const {normalizeComputed} = safe;
+
+// Import specific modules
+const {normalizeComputed, removeRedundantBlockStatements} = safe;
 const {resolveDefiniteBinaryExpressions, resolveLocalCalls} = unsafe;
-let script = 'obfuscated JS here';
-const deobModules = [
-  resolveDefiniteBinaryExpressions,
-  resolveLocalCalls,
-  normalizeComputed,
+
+let script = 'your obfuscated code here';
+
+// Define custom deobfuscation pipeline
+const customModules = [
+  resolveDefiniteBinaryExpressions,  // Resolve literal math operations
+  resolveLocalCalls,                 // Inline function calls
+  normalizeComputed,                 // Convert obj['prop'] to obj.prop
+  removeRedundantBlockStatements,    // Clean up unnecessary blocks
 ];
-script = applyIteratively(script, deobModules);
-console.log(script); // Deobfuscated script
+
+// Apply modules iteratively
+script = applyIteratively(script, customModules);
+console.log(script);
 ```
 
-With the additional `candidateFilter` function argument, it's possible to narrow down the targeted nodes:
+### Targeted Processing
+
+Use candidate filters to target specific nodes:
+
 ```javascript
 import {unsafe} from 'restringer';
-const {resolveLocalCalls} = unsafe;
 import {applyIteratively} from 'flast';
-let script = 'obfuscated JS here';
 
-// It's better to define a function with a meaningful name that can show up in the log 
-function resolveLocalCallsInGlobalScope(arb) {
+const {resolveLocalCalls} = unsafe;
+
+function resolveGlobalScopeCalls(arb) {
+  // Only process calls in global scope
   return resolveLocalCalls(arb, n => n.parentNode?.type === 'Program');
 }
-script = applyIteratively(script, [resolveLocalCallsInGlobalScope]);
-console.log(script); // Deobfuscated script
+
+function resolveSpecificFunctions(arb) {
+  // Only process calls to functions with specific names
+  return resolveLocalCalls(arb, n => {
+    const callee = n.callee;
+    return callee.type === 'Identifier' && 
+           ['decode', 'decrypt', 'transform'].includes(callee.name);
+  });
+}
+
+const script = applyIteratively(code, [
+  resolveGlobalScopeCalls,
+  resolveSpecificFunctions
+]);
 ```
 
-You can also customize any deobfuscation method while still using REstringer without running the loop yourself:
+### Custom Method Integration
+
+Replace or customize built-in methods:
+
 ```javascript
 import fs from 'node:fs';
 import {REstringer} from 'restringer';
 
-const inputFilename = process.argv[2];
-const code = fs.readFileSync(inputFilename, 'utf-8');
-const res = new REstringer(code);
+const code = fs.readFileSync('obfuscated.js', 'utf-8');
+const restringer = new REstringer(code);
 
-// res.logger.setLogLevelDebug();
-res.detectObfuscationType = false;  // Skip obfuscation type detection, including any pre and post processors
+// Find and replace a specific method
+const targetMethod = restringer.unsafeMethods.find(m => 
+  m.name === 'resolveLocalCalls'
+);
 
-const targetFunc = res.unsafeMethods.find(m => m.name === 'resolveLocalCalls');
-let changes = 0;		// Resolve only the first 5 calls
-res.safeMethods[res.unsafeMethods.indexOf(targetFunc)] = function customResolveLocalCalls(n) {return targetFunc(n, () => changes++ < 5)}
-
-res.deobfuscate();
-
-if (res.script !== code) {
-  console.log('[+] Deob successful');
-  fs.writeFileSync(`${inputFilename}-deob.js`, res.script, 'utf-8');
-} else console.log('[-] Nothing deobfuscated :/');
-```
-
-*** 
-
-### Boilerplate code for starting from scratch
-```javascript
-import {applyIteratively, logger} from 'flast';
-// Optional loading from file
-// import fs from 'node:fs';
-// const inputFilename = process.argv[2] || 'target.js';
-// const code = fs.readFileSync(inputFilename, 'utf-8');
-const code = `(function() {
-  function createMessage() {return 'Hello' + ' ' + 'there!';}
-  function print(msg) {console.log(msg);}
-  print(createMessage());
-})();`;
-
-logger.setLogLevelDebug();
-
-/**
- * Replace specific strings with other strings
- * @param {Arborist} arb
- * @return {Arborist}
- */
-function replaceSpecificLiterals(arb) {
-	const replacements = {
-        'Hello': 'General',
-        'there!': 'Kenobi!',
-    };
-    // Iterate over only the relevant nodes by targeting specific types using the typeMap property on the root node
-	const relevantNodes = [
-		...(arb.ast[0].typeMap.Literal || []),
-        // ...(arb.ast.typeMap.TemplateLiteral || []), // unnecessary for this example, but this is how to add more types
-    ];
-    for (const n of relevantNodes) {
-        if (replacements[n.value]) {
-          // dynamically define a replacement node by creating an object with a type and value properties
-          // markNode(n) would delete the node, while markNode(n, {...}) would replace the node with the supplied node.
-          arb.markNode(n, {type: 'Literal', value: replacements[n.value]});
-        }
-    }
-  return arb;
+if (targetMethod) {
+  let processedCount = 0;
+  const maxProcessing = 5;
+  
+  // Custom implementation with limits
+  const customMethod = function limitedResolveLocalCalls(arb) {
+    return targetMethod(arb, () => processedCount++ < maxProcessing);
+  };
+  
+  // Replace the method
+  const index = restringer.unsafeMethods.indexOf(targetMethod);
+  restringer.unsafeMethods[index] = customMethod;
 }
 
-let script = code;
-
-script = applyIteratively(script, [
-  replaceSpecificLiterals,
-]);
-
-if (code !== script) {
-  console.log(script);
-  // fs.writeFileSync(inputFilename + '-deob.js', script, 'utf-8');
-} else console.log(`No changes`);
+restringer.deobfuscate();
 ```
-***
 
-## Read More
-* [Processors](src/processors/README.md)
-* [Contribution guide](CONTRIBUTING.md)
-* [Obfuscation Detector](https://github.com/PerimeterX/obfuscation-detector/blob/main/README.md)
-* [flAST](https://github.com/PerimeterX/flast/blob/main/README.md)
+---
+
+## Architecture
+
+### Module Categories
+
+**Safe Modules** (`src/modules/safe/`):
+- Perform transformations without code evaluation
+- No risk of executing malicious code
+- Examples: String normalization, syntax simplification, dead code removal
+
+**Unsafe Modules** (`src/modules/unsafe/`):
+- Use `eval()` in an isolated sandbox for dynamic analysis
+- Can resolve complex expressions and function calls
+- Secured using [isolated-vm](https://www.npmjs.com/package/isolated-vm)
+
+### Processing Pipeline
+
+1. **Detection**: Identify obfuscation type using pattern recognition
+2. **Preprocessing**: Apply obfuscation-specific preparations
+3. **Core Deobfuscation**: Run safe and unsafe modules iteratively  
+4. **Postprocessing**: Clean up and optimize the result
+5. **Validation**: Ensure output correctness
+
+### Processor Architecture
+
+Specialized processors handle specific obfuscation patterns:
+- **Match/Transform Pattern**: Separate identification and modification logic
+- **Performance Optimized**: Pre-compiled patterns and efficient algorithms  
+- **Configurable**: Support for custom filtering and targeting
+
+---
+
+## Development
+
+### Project Structure
+```
+restringer/
+├── src/
+│   ├── modules/
+│   │   ├── safe/          # Safe deobfuscation modules
+│   │   ├── unsafe/        # Unsafe deobfuscation modules
+│   │   └── utils/         # Utility functions
+│   ├── processors/        # Obfuscation-specific processors
+│   └── restringer.js      # Main REstringer class
+├── tests/                 # Comprehensive test suites
+└── docs/                  # Documentation
+```
+
+### Running Tests
+```bash
+# Quick test suite (without testing against samples)
+npm run test:quick
+
+# Watch mode for development (quick tests)
+npm run test:quick:watch
+
+# Full test suite with samples
+npm test
+```
+
+---
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for detailed guidelines on:
+
+- Setting up the development environment
+- Code standards and best practices  
+- Module and processor development
+- Testing requirements
+- Pull request process
+
+---
+
+## Resources
+
+### Documentation
+- 📖 [Processors Guide](src/processors/README.md) - Detailed processor documentation
+- 🤝 [Contributing Guide](docs/CONTRIBUTING.md) - How to contribute to REstringer
+
+### Related Projects  
+- 🔍 [Obfuscation Detector](https://github.com/HumanSecurity/obfuscation-detector) - Automatic obfuscation detection
+- 🌳 [flAST](https://github.com/HumanSecurity/flast) - AST manipulation utilities
+
+### Research & Blog Posts
+
+**The REstringer Tri(b)logy**:
+- 📝 [The Far Point of a Static Encounter](https://www.humansecurity.com/tech-engineering-blog/the-far-point-of-a-static-encounter/) - Part 1: Understanding static analysis challenges
+- 🔧 [Automating Skimmer Deobfuscation](https://www.humansecurity.com/tech-engineering-blog/automating-skimmer-deobfuscation/) - Part 2: Automated deobfuscation techniques  
+- 🛡️ [Defeating JavaScript Obfuscation](https://www.humansecurity.com/tech-engineering-blog/defeating-javascript-obfuscation/) - Part 3: The story of REstringer
+
+**Additional Resources**:
+- 🔐 [Caesar Plus Deobfuscation](https://www.humansecurity.com/tech-engineering-blog/deobfuscating-caesar/) - Deep dive into Caesar cipher obfuscation
+
+### Community
+- 💬 [GitHub Issues](https://github.com/HumanSecurity/restringer/issues) - Bug reports and feature requests  
+- 🐦 [Twitter @ctrl__esc](https://twitter.com/ctrl__esc) - Updates and discussions
+- 🌐 [Online Tool](https://restringer.tech) - Try REstringer in your browser
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [HUMAN Security](https://www.HumanSecurity.com/)**
+
+</div>

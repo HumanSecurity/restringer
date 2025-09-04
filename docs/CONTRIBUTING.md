@@ -164,6 +164,43 @@ export default function moduleName(arb, candidateFilter = () => true) {
 - **Array operations** - Use `.concat()` for array concatenation and `.slice()` for array copying
 - **Object cloning** - Use spread operators `{ ...obj }` for AST node cloning
 
+#### Static Array Guidelines
+- **Small collections** - For arrays with ≤10 elements, prefer arrays over Sets for simplicity
+- **Large collections** - For larger collections, consider Sets for O(1) lookup performance
+- **Semantic clarity** - Choose the data structure that best represents the intent
+
+#### Common Patterns to Fix
+
+**Performance Anti-patterns**:
+```javascript
+// ❌ Bad - recreated every call
+function someFunction() {
+    const types = ['Type1', 'Type2'];
+    const relevantNodes = [...(arb.ast[0].typeMap.NodeType || [])];
+    // ...
+}
+
+// ✅ Good - static extraction and direct access
+const ALLOWED_TYPES = ['Type1', 'Type2'];
+function someFunction() {
+    const relevantNodes = arb.ast[0].typeMap.NodeType;
+    // ...
+}
+```
+
+**Structure Anti-patterns**:
+```javascript
+// ❌ Bad - everything mixed together
+function moduleMainFunc(arb) {
+    // matching logic mixed with transformation logic
+}
+
+// ✅ Good - separated concerns
+export function moduleMainFuncMatch(arb) { /* matching */ }
+export function moduleMainFuncTransform(arb, node) { /* transformation */ }
+export default function moduleMainFunc(arb) { /* orchestration */ }
+```
+
 ### Documentation Standards
 
 #### JSDoc Requirements
@@ -336,14 +373,24 @@ describe('Custom Processor Tests', async () => {
 
 ### Review Checklist
 
-#### For Modules:
-- [ ] Follows match/transform pattern
-- [ ] Includes comprehensive JSDoc documentation
-- [ ] Has static pattern extraction for performance
-- [ ] Uses traditional for loops with proper variable naming
-- [ ] Includes both TP and TN test cases
-- [ ] No obvious or trivial comments
-- [ ] Explicit `arb` returns and proper functional flow
+#### Code Review (for Modules):
+- [ ] Identify and fix any bugs
+- [ ] Split into match/transform functions
+- [ ] Extract static arrays/sets outside functions
+- [ ] Use traditional for loops with `i` variable
+- [ ] Add comprehensive JSDoc documentation with specific types
+- [ ] Add non-trivial inline comments only (avoid obvious comments)
+- [ ] Ensure explicit `arb` returns
+- [ ] Use `arb = transform(arb, node)` pattern
+
+#### Test Review (for Modules):
+- [ ] Review existing tests for relevance and correctness
+- [ ] Identify missing test cases
+- [ ] Add positive test cases (TP)
+- [ ] Add negative test cases (TN)
+- [ ] Add edge case tests
+- [ ] Ensure test names are descriptive
+- [ ] Verify expected results match actual behavior
 
 #### For Processors:
 - [ ] Exports `preprocessors` and `postprocessors` arrays
@@ -358,6 +405,16 @@ describe('Custom Processor Tests', async () => {
 - [ ] No regressions in existing functionality
 - [ ] Code follows project style guidelines
 - [ ] Documentation is updated appropriately
+
+## Success Criteria
+
+A successfully refactored module should:
+1. **Function identically** to the original (all tests pass)
+2. **Have better structure** (match/transform separation)
+3. **Perform better** (optimized loops, static extractions)
+4. **Be well documented** (comprehensive JSDoc and comments)
+5. **Have comprehensive tests** (positive, negative, edge cases)
+6. **Follow established patterns** (consistent with other refactored modules)
 - [ ] Commit messages are clear and descriptive
 
 ### Commit Message Guidelines
