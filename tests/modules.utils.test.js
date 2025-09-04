@@ -349,7 +349,7 @@ describe('UTILS: createNewNode', async () => {
 		const result = targetModule(code);
 		assert.deepEqual(result, expected);
 	});
-	it('Object: populated with BadValue', () => {
+	it('Object: populated with BAD_VALUE', () => {
 		const code = {a() {}};
 		const expected = BAD_VALUE;
 		const result = targetModule(code);
