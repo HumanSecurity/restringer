@@ -338,7 +338,7 @@ export function advancedProcessorTransform(arb, node) {
   const expression = extractExpression(node);
   const result = evalInVm(expression);
   
-  if (result !== 'BAD_VALUE') {
+  if (result !== evalInVm.BAD_VALUE) {
     node.replace(result);
   }
   

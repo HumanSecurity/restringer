@@ -1,4 +1,3 @@
-import {BAD_VALUE} from '../config.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {doesDescendantMatchCondition} from '../utils/doesDescendantMatchCondition.js';
 
@@ -59,7 +58,7 @@ export function resolveMinimalAlphabetTransform(arb, matches) {
 	for (let i = 0; i < matches.length; i++) {
 		const n = matches[i];
 		const replacementNode = evalInVm(n.src);
-		if (replacementNode !== BAD_VALUE) {
+		if (replacementNode !== evalInVm.BAD_VALUE) {
 			arb.markNode(n, replacementNode);
 		}
 	}

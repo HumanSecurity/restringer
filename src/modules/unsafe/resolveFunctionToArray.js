@@ -3,7 +3,6 @@
  * The obfuscated script dynamically generates an array which is referenced throughout the script.
  */
 import utils from '../utils/index.js';
-import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 const {createOrderedSrc, getDeclarationWithContext} = utils;
@@ -71,7 +70,7 @@ export function resolveFunctionToArrayTransform(arb, matches) {
 		src += `\n;${createOrderedSrc([n.init])}\n;`;
 		
 		const replacementNode = evalInVm(src, sharedSb);
-		if (replacementNode !== BAD_VALUE) {
+		if (replacementNode !== evalInVm.BAD_VALUE) {
 			arb.markNode(n.init, replacementNode);
 		}
 	}

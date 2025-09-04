@@ -1,5 +1,4 @@
 import {parseCode} from 'flast';
-import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createOrderedSrc} from '../utils/createOrderedSrc.js';
@@ -85,7 +84,7 @@ export function resolveEvalCallsOnNonLiteralsTransform(arb, matches) {
 			// If all parsing attempts fail, keep the original evaluated result
 		}
 		
-		if (replacementNode !== BAD_VALUE) {
+		if (replacementNode !== evalInVm.BAD_VALUE) {
 			arb.markNode(targetNode, replacementNode);
 		}
 	}

@@ -1,5 +1,5 @@
+import {SKIP_PROPERTIES} from '../config.js';
 import {evalInVm} from '../utils/evalInVm.js';
-import {BAD_VALUE, SKIP_PROPERTIES} from '../config.js';
 import {createOrderedSrc} from '../utils/createOrderedSrc.js';
 import {areReferencesModified} from '../utils/areReferencesModified.js';
 import {getDeclarationWithContext} from '../utils/getDeclarationWithContext.js';
@@ -76,7 +76,7 @@ export function resolveMemberExpressionsLocalReferencesTransform(arb, matches) {
 		if (context) {
 			const src = `${context}\n${n.src}`;
 			const replacementNode = evalInVm(src);
-			if (replacementNode !== BAD_VALUE) {
+			if (replacementNode !== evalInVm.BAD_VALUE) {
 				// Check if replacement would result in empty/meaningless values
 				let isEmptyReplacement = false;
 				switch (replacementNode.type) {

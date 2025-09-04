@@ -1,4 +1,3 @@
-import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {getDescendants} from '../utils/getDescendants.js';
@@ -159,7 +158,7 @@ export function resolveAugmentedFunctionWrappedArrayReplacementsTransform(arb, n
 					for (let j = 0; j < replacementCandidates.length; j++) {
 						const rc = replacementCandidates[j];
 						const replacementNode = evalInVm(`\n${rc.src}`, sb);
-						if (replacementNode !== BAD_VALUE) {
+						if (replacementNode !== evalInVm.BAD_VALUE) {
 							arb.markNode(rc, replacementNode);
 						}
 					}

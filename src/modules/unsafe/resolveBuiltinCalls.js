@@ -1,5 +1,4 @@
 import {logger} from 'flast';
-import {BAD_VALUE} from '../config.js';
 import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createNewNode} from '../utils/createNewNode.js';
@@ -80,7 +79,7 @@ export function resolveBuiltinCallsTransform(arb, n, sharedSb) {
 		} else {
 			// Evaluate unknown builtin calls in sandbox
 			const replacementNode = evalInVm(n.src, sharedSb);
-			if (replacementNode !== BAD_VALUE) arb.markNode(n, replacementNode);
+			if (replacementNode !== evalInVm.BAD_VALUE) arb.markNode(n, replacementNode);
 		}
 	} catch (e) {
 		logger.debug(e.message);

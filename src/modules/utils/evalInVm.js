@@ -91,3 +91,6 @@ export function evalInVm(stringToEval, sb) {
 	}
 	return cache[cacheName];
 }
+
+// Attach BAD_VALUE to evalInVm for convenient access by modules using evalInVm
+evalInVm.BAD_VALUE = BAD_VALUE;

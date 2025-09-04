@@ -21,9 +21,8 @@
  * 3. Replace the original array declaration with the final static array
  * 4. Remove the augmenting IIFE as it's no longer needed
  */
-import {config, unsafe, utils} from '../modules/index.js';
+import {unsafe, utils} from '../modules/index.js';
 const {resolveFunctionToArray} = unsafe;
-const {BAD_VALUE} = config;
 const {createOrderedSrc, evalInVm, getDeclarationWithContext} = utils.default;
 
 // Function declaration type pattern for detecting array source context
@@ -128,7 +127,7 @@ export function augmentedArrayTransform(arb, n) {
 	
 	// Execute the augmentation in VM to get the final array state
 	const replacementNode = evalInVm(src);
-	if (replacementNode !== BAD_VALUE) {
+	if (replacementNode !== evalInVm.BAD_VALUE) {
 		// Mark the IIFE for removal
 		arb.markNode(targetNode || n);
 		
