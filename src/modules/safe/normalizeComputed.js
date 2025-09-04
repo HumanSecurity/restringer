@@ -1,7 +1,7 @@
 import {BAD_IDENTIFIER_CHARS_REGEX, VALID_IDENTIFIER_BEGINNING} from '../config.js';
 
 // Node types that use 'key' property instead of 'property' for computed access
-const relevantTypes = ['MethodDefinition', 'Property'];
+const RELEVANT_TYPES = ['MethodDefinition', 'Property'];
 
 /**
  * Find all computed member expressions, method definitions, and properties that can be converted to dot notation.
@@ -37,7 +37,7 @@ export function normalizeComputedMatch(arb, candidateFilter = () => true) {
 			 *    ['miao']: 4     // Will be changed to 'miao: 4'
 			 *  };
 			 */
-			(relevantTypes.includes(n.type) &&
+			(RELEVANT_TYPES.includes(n.type) &&
 				n.key.type === 'Literal' &&
 				VALID_IDENTIFIER_BEGINNING.test(n.key.value) &&
 				!BAD_IDENTIFIER_CHARS_REGEX.test(n.key.value))) &&

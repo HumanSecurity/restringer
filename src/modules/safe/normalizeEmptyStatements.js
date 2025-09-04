@@ -1,5 +1,5 @@
 // Control flow statement types where empty statements must be preserved as statement bodies
-const controlFlowStatementTypes = ['ForStatement', 'ForInStatement', 'ForOfStatement', 'WhileStatement', 'DoWhileStatement', 'IfStatement'];
+const CONTROL_FLOW_STATEMENT_TYPES = ['ForStatement', 'ForInStatement', 'ForOfStatement', 'WhileStatement', 'DoWhileStatement', 'IfStatement'];
 
 /**
  * Find all empty statements that can be safely removed.
@@ -20,7 +20,7 @@ export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true)
 			// If we delete that empty statement the syntax breaks
 			// e.g. for (var i = 0, b = 8;;); - valid for statement
 			// e.g. if (condition); - valid if statement with empty consequent
-			if (!controlFlowStatementTypes.includes(n.parentNode.type)) {
+			if (!CONTROL_FLOW_STATEMENT_TYPES.includes(n.parentNode.type)) {
 				matchingNodes.push(n);
 			}
 		}

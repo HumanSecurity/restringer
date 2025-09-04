@@ -1,5 +1,5 @@
 // Logical operators that can be converted to if statements
-const logicalOperators = ['&&', '||'];
+const LOGICAL_OPERATORS = ['&&', '||'];
 
 /**
  * Find all expression statements containing logical expressions that can be converted to if statements.
@@ -19,7 +19,7 @@ export function replaceBooleanExpressionsWithIfMatch(arb, candidateFilter = () =
 		const n = relevantNodes[i];
 		// Check if the expression statement contains a logical expression with && or ||
 		if (n.expression?.type === 'LogicalExpression' &&
-			logicalOperators.includes(n.expression.operator) && 
+			LOGICAL_OPERATORS.includes(n.expression.operator) && 
 			candidateFilter(n)) {
 			matchingNodes.push(n);
 		}

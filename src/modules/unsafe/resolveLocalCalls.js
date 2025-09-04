@@ -13,7 +13,7 @@ const CACHE_LIMIT = 100;
 const BAD_ARGUMENT_TYPES = ['ThisExpression'];
 
 // Module-level variables for appearance tracking  
-let appearances = new Map();
+let APPEARANCES = new Map();
 
 /**
  * Sorts call expression nodes by their appearance frequency in descending order.
@@ -22,7 +22,7 @@ let appearances = new Map();
  * @return {number} Comparison result for sorting
  */
 function sortByApperanceFrequency(a, b) {
-	return appearances.get(getCalleeName(b)) - appearances.get(getCalleeName(a));
+	return APPEARANCES.get(getCalleeName(b)) - APPEARANCES.get(getCalleeName(a));
 }
 
 /**
@@ -32,8 +32,8 @@ function sortByApperanceFrequency(a, b) {
  */
 function countAppearances(n) {
 	const calleeName = getCalleeName(n);
-	const count = (appearances.get(calleeName) || 0) + 1;
-	appearances.set(calleeName, count);
+	const count = (APPEARANCES.get(calleeName) || 0) + 1;
+	APPEARANCES.set(calleeName, count);
 	return count;
 }
 
@@ -45,7 +45,7 @@ function countAppearances(n) {
  * @return {ASTNode[]} Array of call expression nodes that can be transformed
  */
 export function resolveLocalCallsMatch(arb, candidateFilter = () => true) {
-	appearances = new Map();
+	APPEARANCES = new Map();
 	const matches = [];
 	const relevantNodes = arb.ast[0].typeMap.CallExpression;
 

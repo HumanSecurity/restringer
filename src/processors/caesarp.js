@@ -2,8 +2,8 @@ import {Arborist} from 'flast';
 import {safe} from '../modules/index.js';
 const {removeDeadNodes} = safe;
 
-const lineWithFinalAssignmentRegex = /(\w{3})\[.*]\s*=.*\((\w{3})\).*=\s*\1\s*\+\s*['"]/ms;
-const variableContainingTheInnerLayerRegex = /\(((\w{3}\()+(\w{3})\)*)\)/gms;
+const LINE_WITH_FINAL_ASSIGNMENT_REGEX = /(\w{3})\[.*]\s*=.*\((\w{3})\).*=\s*\1\s*\+\s*['"]/ms;
+const VARIABLE_CONTAINING_THE_INNER_LAYER_REGEX = /\(((\w{3}\()+(\w{3})\)*)\)/gms;
 
 /**
  * Caesar+ Deobfuscator
@@ -37,12 +37,12 @@ function extractInnerLayer(arb) {
 	// We can catch the variable holding the code before it's injected and output it instead.
 	let script = arb.script;
 
-	const matches = lineWithFinalAssignmentRegex.exec(script);
+	const matches = LINE_WITH_FINAL_ASSIGNMENT_REGEX.exec(script);
 	if (matches?.length) {
 		const lineToReplace = script.substring(matches.index);
 		// Sometimes the first layer variable is wrapped in other functions which will decrypt it
 		// like OdP(qv4(dAN(RKt))) instead of just RKt, so we need output the entire chain.
-		const innerLayerVarMatches = variableContainingTheInnerLayerRegex.exec(lineToReplace);
+		const innerLayerVarMatches = VARIABLE_CONTAINING_THE_INNER_LAYER_REGEX.exec(lineToReplace);
 		const variableContainingTheInnerLayer = innerLayerVarMatches ? innerLayerVarMatches[0] : matches[2];
 		script = script.replace(lineToReplace, `console.log(${variableContainingTheInnerLayer}.toString());})();\n`);
 		// script = evalWithDom(script);

@@ -1,5 +1,5 @@
 // Parent types that indicate a block statement is redundant (creates unnecessary nesting)
-const redundantBlockParentTypes = ['BlockStatement', 'Program'];
+const REDUNDANT_BLOCK_PARENT_TYPES = ['BlockStatement', 'Program'];
 
 /**
  * Find all block statements that are redundant and can be flattened.
@@ -20,7 +20,7 @@ export function removeRedundantBlockStatementsMatch(arb, candidateFilter = () =>
 		// Block statements are redundant if:
 		// 1. Their parent is a node type that creates unnecessary nesting
 		// 2. They pass the candidate filter
-		if (redundantBlockParentTypes.includes(n.parentNode.type) && candidateFilter(n)) {
+		if (REDUNDANT_BLOCK_PARENT_TYPES.includes(n.parentNode.type) && candidateFilter(n)) {
 			matchingNodes.push(n);
 		}
 	}

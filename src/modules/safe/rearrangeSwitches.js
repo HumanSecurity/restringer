@@ -1,6 +1,6 @@
 import {getDescendants} from '../utils/getDescendants.js';
 
-const maxRepetition = 50;
+const MAX_REPETITION = 50;
 
 /**
  * Find switch statements that can be linearized into sequential code.
@@ -51,7 +51,7 @@ export function rearrangeSwitchesTransform(arb, switchNode) {
 	let counter = 0;
 	
 	// Trace execution path through switch cases
-	while (currentVal !== undefined && counter < maxRepetition) {
+	while (currentVal !== undefined && counter < MAX_REPETITION) {
 		// Find the matching case for current value (or default case)
 		let currentCase;
 		for (let i = 0; i < cases.length; i++) {

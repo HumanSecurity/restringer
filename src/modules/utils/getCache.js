@@ -1,5 +1,5 @@
-let cache = {};
-let relevantScriptHash = null;
+let CACHE = {};
+let RELEVANT_SCRIPT_HASH = null;
 
 /**
  * Gets a per-script cache object that automatically invalidates when the script hash changes.
@@ -23,12 +23,12 @@ export function getCache(currentScriptHash) {
 	const scriptHash = currentScriptHash ?? 'no-hash';
 	
 	// Cache invalidation: clear when script changes
-	if (scriptHash !== relevantScriptHash) {
-		relevantScriptHash = scriptHash;
-		cache = {};
+	if (scriptHash !== RELEVANT_SCRIPT_HASH) {
+		RELEVANT_SCRIPT_HASH = scriptHash;
+		CACHE = {};
 	}
 	
-	return cache;
+	return CACHE;
 }
 
 /**
@@ -36,7 +36,7 @@ export function getCache(currentScriptHash) {
  * Useful for clearing memory between processing phases or for testing.
  */
 getCache.flush = function() {
-	cache = {};
-	// Note: relevantScriptHash is intentionally preserved to avoid
+	CACHE = {};
+	// Note: RELEVANT_SCRIPT_HASH is intentionally preserved to avoid
 	// unnecessary cache misses on the next getCache call with same hash
 };

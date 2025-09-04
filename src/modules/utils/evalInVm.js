@@ -29,7 +29,7 @@ const TRAP_STRINGS = [
 	},
 ];
 
-let cache = {};
+let CACHE = {};
 const MAX_CACHE_SIZE = 100;
 
 /**
@@ -59,10 +59,10 @@ const MAX_CACHE_SIZE = 100;
  */
 export function evalInVm(stringToEval, sb) {
 	const cacheName = `eval-${generateHash(stringToEval)}`;
-	if (cache[cacheName] === undefined) {
+	if (CACHE[cacheName] === undefined) {
 		// Simple cache eviction: clear all when hitting size limit
-		if (Object.keys(cache).length >= MAX_CACHE_SIZE) cache = {};
-		cache[cacheName] = BAD_VALUE;
+		if (Object.keys(CACHE).length >= MAX_CACHE_SIZE) CACHE = {};
+		CACHE[cacheName] = BAD_VALUE;
 		try {
 			// Neutralize anti-debugging and infinite loop traps before evaluation
 			for (let i = 0; i < TRAP_STRINGS.length; i++) {
@@ -80,16 +80,16 @@ export function evalInVm(stringToEval, sb) {
 				// Check if result matches a known builtin object (e.g., console)
 				const objKeys = Object.keys(res).sort().join('');
 				if (MATCHING_OBJECT_KEYS[objKeys]) {
-					cache[cacheName] = MATCHING_OBJECT_KEYS[objKeys];
+					CACHE[cacheName] = MATCHING_OBJECT_KEYS[objKeys];
 				} else {
-					cache[cacheName] = createNewNode(res);
+					CACHE[cacheName] = createNewNode(res);
 				}
 			}
 		} catch {
 			// Evaluation failed - cache entry remains BAD_VALUE
 		}
 	}
-	return cache[cacheName];
+	return CACHE[cacheName];
 }
 
 // Attach BAD_VALUE to evalInVm for convenient access by modules using evalInVm

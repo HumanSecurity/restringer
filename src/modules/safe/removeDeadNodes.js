@@ -1,4 +1,4 @@
-const relevantParents = [
+const RELEVANT_PARENTS = [
 	'VariableDeclarator',
 	'AssignmentExpression',
 	'FunctionDeclaration',
@@ -22,7 +22,7 @@ function removeDeadNodesMatch(arb, candidateFilter = () => true) {
 	for (let i = 0; i < relevantNodes.length; i++) {
 		const n = relevantNodes[i];
 		// Check if identifier is in a declaration context and has no references
-		if (relevantParents.includes(n.parentNode.type) &&
+		if (RELEVANT_PARENTS.includes(n.parentNode.type) &&
 			(!n?.declNode?.references?.length && !n?.references?.length) &&
 			candidateFilter(n)) {
 			const parent = n.parentNode;
