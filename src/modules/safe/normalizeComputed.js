@@ -1,7 +1,9 @@
-import {BAD_IDENTIFIER_CHARS_REGEX, VALID_IDENTIFIER_BEGINNING} from '../config.js';
-
 // Node types that use 'key' property instead of 'property' for computed access
 const RELEVANT_TYPES = ['MethodDefinition', 'Property'];
+// A string that tests true for this regex cannot be used as a variable name.
+const BAD_IDENTIFIER_CHARS_REGEX = /([:!@#%^&*(){}[\]\\|/`'"]|[^\da-zA-Z_$])/;
+// A regex for a valid identifier name.
+const VALID_IDENTIFIER_BEGINNING = /^[A-Za-z$_]/;
 
 /**
  * Find all computed member expressions, method definitions, and properties that can be converted to dot notation.

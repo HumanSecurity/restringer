@@ -9,8 +9,6 @@ import {getDeclarationWithContext} from '../utils/getDeclarationWithContext.js';
 
 const VALID_UNWRAP_TYPES = ['Literal', 'Identifier'];
 const CACHE_LIMIT = 100;
-// Arguments that shouldn't be touched since the context may not be inferred during deobfuscation.
-const BAD_ARGUMENT_TYPES = ['ThisExpression'];
 
 // Module-level variables for appearance tracking  
 let APPEARANCES = new Map();
@@ -89,7 +87,7 @@ export function resolveLocalCallsTransform(arb, matches) {
 		
 		// Skip if any argument has problematic type
 		for (let j = 0; j < c.arguments.length; j++) {
-			if (BAD_ARGUMENT_TYPES.includes(c.arguments[j].type)) continue candidateLoop;
+			if (c.arguments[j].type === 'ThisExpression') continue candidateLoop;
 		}
 		
 		const callee = c.callee?.object || c.callee;

@@ -3,9 +3,13 @@ import {Sandbox} from '../utils/sandbox.js';
 import {evalInVm} from '../utils/evalInVm.js';
 import {createNewNode} from '../utils/createNewNode.js';
 import * as safeImplementations from '../utils/safeImplementations.js';
-import {SKIP_BUILTIN_FUNCTIONS, SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
+import {SKIP_IDENTIFIERS, SKIP_PROPERTIES} from '../config.js';
 
 const AVAILABLE_SAFE_IMPLEMENTATIONS = Object.keys(safeImplementations);
+// Builtin functions that shouldn't be resolved in the deobfuscation context.
+const SKIP_BUILTIN_FUNCTIONS = [
+	'Function', 'eval', 'Array', 'Object', 'fetch', 'XMLHttpRequest', 'Promise', 'console', 'performance', '$',
+];
 
 /**
  * Identifies builtin function calls that can be resolved to literal values.
