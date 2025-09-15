@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import {REstringer} from '../src/restringer.js';
-import {argsAreValid, parseArgs} from'../src/utils/parseArgs.js';
+import {parseArgs} from '../src/utils/parseArgs.js';
 
 try {
 	const args = parseArgs(process.argv.slice(2));
-	if (argsAreValid(args)) {
-		const fs = await import('node:fs');
-		let content = fs.readFileSync(args.inputFilename, 'utf-8');
+	
+	// Skip processing if help was displayed
+	if (args.help) process.exit(0);
+	
+	const fs = await import('node:fs');
+	let content = fs.readFileSync(args.inputFilename, 'utf-8');
 		const startTime = Date.now();
 
 		const restringer = new REstringer(content);
@@ -24,7 +27,6 @@ try {
 			if (args.outputToFile) fs.writeFileSync(args.outputFilename, restringer.script, {encoding: 'utf-8'});
 			else console.log(restringer.script);
 		} else restringer.logger.log(`[-] Nothing was deobfuscated  ¯\\_(ツ)_/¯`);
-	}
 } catch (e) {
 	console.error(`[-] Critical Error: ${e}`);
 }
