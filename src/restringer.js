@@ -24,7 +24,7 @@ export class REstringer {
 
 	/**
 	 * @param {string} script The target script to be deobfuscated
-	 * @param {boolean} normalize Run optional methods which will make the script more readable
+	 * @param {boolean} [normalize] Run optional methods which will make the script more readable
 	 */
 	constructor(script, normalize = true) {
 		this.script = script;
