@@ -175,7 +175,7 @@ console.log('a'); // Resolved access
 - Decoder functions embedded in the code
 
 **Resources**:
-- 📖 [Detailed Analysis](https://www.perimeterx.com/tech-blog/2020/deobfuscating-caesar/) - Complete breakdown of Caesar Plus obfuscation
+- 📖 [Detailed Analysis](https://www.humansecurity.com/tech-engineering-blog/deobfuscating-caesar/) - Complete breakdown of Caesar Plus obfuscation
 
 **Configuration**:
 - **Preprocessor**: Unwraps outer obfuscation layer
@@ -294,7 +294,7 @@ export function customProcessorMatch(arb, candidateFilter = () => true) {
   
   for (let i = 0; i < candidates.length; i++) {
     const node = candidates[i];
-    if (matchesYourPattern(node) && candidateFilter(node)) {
+    if (DETECTION_PATTERNS.targetPattern.exec(node) && candidateFilter(node)) {
       matches.push(node);
     }
   }
@@ -419,9 +419,9 @@ const combined = array1.concat(array2); // Combine arrays
 
 ### Basic Test Structure
 ```javascript
-import {assert} from 'chai';
-import {applyProcessors} from 'flast';
-import Arborist from 'arborist';
+import assert from 'node:assert';
+import {describe, it} from 'node:test';
+import {applyIteratively} from 'flast';
 
 describe('Custom Processor Tests', () => {
   const targetProcessors = await import('./customProcessor.js');
@@ -430,20 +430,20 @@ describe('Custom Processor Tests', () => {
     const code = `/* obfuscated pattern */`;
     const expected = `/* expected result */`;
     
-    let arb = new Arborist(code);
-    arb = applyProcessors(arb, targetProcessors);
+    let script = applyIteratively(code, targetProcessors.preprocessors);
+    script = applyIteratively(script, targetProcessors.postprocessors);
     
-    assert.strictEqual(arb.script, expected);
+    assert.strictEqual(script, expected);
   });
   
   it('TN-1: Should not transform invalid pattern', () => {
     const code = `/* non-matching pattern */`;
     const originalScript = code;
     
-    let arb = new Arborist(code);
-    arb = applyProcessors(arb, targetProcessors);
+    let script = applyIteratively(code, targetProcessors.preprocessors);
+    script = applyIteratively(script, targetProcessors.postprocessors);
     
-    assert.strictEqual(arb.script, originalScript);
+    assert.strictEqual(script, originalScript);
   });
 });
 ```
