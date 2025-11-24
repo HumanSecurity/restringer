@@ -141,28 +141,6 @@ if (restringer.deobfuscate()) {
 }
 ```
 
-#### Advanced Configuration
-```javascript
-import {REstringer} from 'restringer';
-
-const restringer = new REstringer(code, {
-  // Configuration options
-  maxIterations: 50,
-  quiet: false
-});
-
-// Enable debug logging
-restringer.logger.setLogLevelDebug();
-
-// Disable automatic obfuscation detection
-restringer.detectObfuscationType = false;
-
-// Access deobfuscation statistics
-restringer.deobfuscate();
-console.log(`Iterations: ${restringer.iterations}`);
-console.log(`Changes made: ${restringer.changes}`);
-```
-
 ---
 
 ## Advanced Usage
@@ -176,8 +154,10 @@ import {applyIteratively} from 'flast';
 import {safe, unsafe} from 'restringer';
 
 // Import specific modules
-const {normalizeComputed, removeRedundantBlockStatements} = safe;
-const {resolveDefiniteBinaryExpressions, resolveLocalCalls} = unsafe;
+const normalizeComputed = safe.normalizeComputed.default;
+const removeRedundantBlockStatements = safe.removeRedundantBlockStatements.default;
+const resolveDefiniteBinaryExpressions = unsafe.resolveDefiniteBinaryExpressions.default;
+const resolveLocalCalls = unsafe.resolveLocalCalls.default;
 
 let script = 'your obfuscated code here';
 
