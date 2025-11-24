@@ -5,7 +5,7 @@ import {evalInVm} from '../utils/evalInVm.js';
  * Identifies ConditionalExpression nodes with literal test values that can be deterministically resolved.
  * Matches ternary expressions like 'a' ? x : y, 0 ? x : y, true ? x : y where the test is a literal.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {ASTNode[]} Array of ConditionalExpression nodes ready for evaluation
  */
 export function resolveDeterministicConditionalExpressionsMatch(arb, candidateFilter = () => true) {
@@ -52,7 +52,7 @@ export function resolveDeterministicConditionalExpressionsTransform(arb, matches
  * Transforms expressions like 'a' ? do_a() : do_b() → do_a() since 'a' is truthy.
  * Only processes conditionals where the test is a literal for safe evaluation.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter function for candidates
+ * @param {Function} [candidateFilter] - Optional filter function for candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveDeterministicConditionalExpressions(arb, candidateFilter = () => true) {

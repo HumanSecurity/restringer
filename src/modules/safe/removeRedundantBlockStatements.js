@@ -8,7 +8,7 @@ const REDUNDANT_BLOCK_PARENT_TYPES = ['BlockStatement', 'Program'];
  * direct children of other block statements or the Program node.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of redundant block statement nodes
  */
 export function removeRedundantBlockStatementsMatch(arb, candidateFilter = () => true) {
@@ -91,7 +91,7 @@ export function removeRedundantBlockStatementsTransform(arb, blockNode) {
  * Note: Processing stops after Program node replacement since the root changes.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function removeRedundantBlockStatements(arb, candidateFilter = () => true) {

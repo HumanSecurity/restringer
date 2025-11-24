@@ -121,7 +121,7 @@ export function separateChainedDeclaratorsTransform(arb, n) {
  * - Wraps in BlockStatement when parent expects single node: `if (x) var a, b;` becomes `if (x) { var a; var b; }`
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply to candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply to candidates
  * @return {Arborist} The Arborist instance for chaining
  */
 export default function separateChainedDeclarators(arb, candidateFilter = () => true) {

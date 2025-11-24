@@ -84,7 +84,7 @@ function getReplacementTarget(callNode, replacementNode) {
  * 6. Apply candidate filter for additional constraints
  *
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of NewExpression nodes that can be safely replaced
  */
 export function replaceNewFuncCallsWithLiteralContentMatch(arb, candidateFilter = () => true) {
@@ -164,7 +164,7 @@ export function replaceNewFuncCallsWithLiteralContentTransform(arb, n) {
  * - Uses caching to avoid re-parsing identical code strings
  *
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 export default function replaceNewFuncCallsWithLiteralContent(arb, candidateFilter = () => true) {

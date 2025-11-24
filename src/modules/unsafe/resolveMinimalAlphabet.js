@@ -8,7 +8,7 @@ import {doesDescendantMatchCondition} from '../utils/doesDescendantMatchConditio
  * Targets JSFuck-style obfuscation patterns using non-numeric operands and excludes 
  * expressions containing ThisExpression for safe evaluation.
  * @param {Arborist} arb - Arborist instance
- * @param {Function} candidateFilter - Optional filter function for additional candidate filtering
+ * @param {Function} [candidateFilter] - Optional filter function for additional candidate filtering
  * @return {ASTNode[]} Array of expression nodes that can be resolved
  */
 export function resolveMinimalAlphabetMatch(arb, candidateFilter = () => true) {
@@ -71,7 +71,7 @@ export function resolveMinimalAlphabetTransform(arb, matches) {
  * as well as binary expressions around the + operator. These usually resolve to string values,
  * which can be used to obfuscate code in schemes such as JSFuck.
  * @param {Arborist} arb - Arborist instance
- * @param {Function} candidateFilter - Optional filter function for additional candidate filtering
+ * @param {Function} [candidateFilter] - Optional filter function for additional candidate filtering
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveMinimalAlphabet(arb, candidateFilter = () => true) {

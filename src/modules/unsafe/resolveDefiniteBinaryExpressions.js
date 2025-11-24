@@ -135,7 +135,7 @@ export function resolveDefiniteBinaryExpressionsTransform(arb, matches) {
  * in a sandbox and replacing them with their computed results.
  * Handles expressions like: 5 * 3 → 15, '2' + 2 → '22', 10 - 15 → -5
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter function for candidates
+ * @param {Function} [candidateFilter] - Optional filter function for candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveDefiniteBinaryExpressions(arb, candidateFilter = () => true) {

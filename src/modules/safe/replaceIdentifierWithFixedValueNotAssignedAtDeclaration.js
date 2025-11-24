@@ -73,7 +73,7 @@ function getSingleAssignmentReference(n) {
  * 5. Apply candidate filter for additional constraints
  *
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of identifier nodes that can be safely replaced
  */
 export function replaceIdentifierWithFixedValueNotAssignedAtDeclarationMatch(arb, candidateFilter = () => true) {
@@ -165,7 +165,7 @@ export function replaceIdentifierWithFixedValueNotAssignedAtDeclarationTransform
  * - Preserves function calls where variable is the callee
  *
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 export default function replaceIdentifierWithFixedValueNotAssignedAtDeclaration(arb, candidateFilter = () => true) {

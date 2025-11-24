@@ -39,7 +39,7 @@ function countAppearances(n) {
  * Identifies CallExpression nodes that can be resolved through local function definitions.
  * Collects call expressions where the callee has a declaration node and meets specific criteria.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {ASTNode[]} Array of call expression nodes that can be transformed
  */
 export function resolveLocalCallsMatch(arb, candidateFilter = () => true) {
@@ -152,7 +152,7 @@ export function resolveLocalCallsTransform(arb, matches) {
  * This module identifies call expressions where the callee is defined locally and attempts
  * to resolve their values through safe evaluation in a sandbox environment.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveLocalCalls(arb, candidateFilter = () => true) {

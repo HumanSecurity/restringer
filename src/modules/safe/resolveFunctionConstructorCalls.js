@@ -151,7 +151,7 @@ export function resolveFunctionConstructorCallsTransform(arb, n) {
  * making the code more readable and enabling further static analysis.
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST to transform
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveFunctionConstructorCalls(arb, candidateFilter = () => true) {

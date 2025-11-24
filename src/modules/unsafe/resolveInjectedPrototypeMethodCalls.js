@@ -13,7 +13,7 @@ const VALID_PROTOTYPE_FUNCTION_TYPES = ['FunctionExpression', 'ArrowFunctionExpr
  * Matches patterns like `String.prototype.method = function() {...}`, `Obj.prototype.prop = () => value`, 
  * or `Obj.prototype.prop = identifier`. Arrow functions work fine when they don't rely on 'this' binding.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {Object[]} Array of match objects containing prototype assignments and method details
  */
 export function resolveInjectedPrototypeMethodCallsMatch(arb, candidateFilter = () => true) {
@@ -92,7 +92,7 @@ export function resolveInjectedPrototypeMethodCallsTransform(arb, matches) {
  * Finds prototype method assignments like `String.prototype.secret = function() {...}`
  * and resolves corresponding calls like `'hello'.secret()` to their literal results.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveInjectedPrototypeMethodCalls(arb, candidateFilter = () => true) {

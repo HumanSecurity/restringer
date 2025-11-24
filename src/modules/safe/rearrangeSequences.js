@@ -1,7 +1,7 @@
 /**
  * Find all return statements and if statements that contain sequence expressions.
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of nodes with sequence expressions that can be rearranged
  */
 export function rearrangeSequencesMatch(arb, candidateFilter = () => true) {
@@ -97,7 +97,7 @@ export function rearrangeSequencesTransform(arb, node) {
  * 5. Handle both block statement parents and single statement contexts
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function rearrangeSequences(arb, candidateFilter = () => true) {

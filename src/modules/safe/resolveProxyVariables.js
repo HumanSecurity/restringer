@@ -116,7 +116,7 @@ export function resolveProxyVariablesTransform(arb, match) {
  * - Removes unused declarations to clean up dead code
  * 
  * @param {Arborist} arb - The AST tree manager
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified AST tree manager
  */
 export default function resolveProxyVariables(arb, candidateFilter = () => true) {

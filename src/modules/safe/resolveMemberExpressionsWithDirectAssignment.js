@@ -222,7 +222,7 @@ export function resolveMemberExpressionsWithDirectAssignmentTransform(arb, match
  * - Ensures all references are read-only accesses
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST to transform
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveMemberExpressionsWithDirectAssignment(arb, candidateFilter = () => true) {

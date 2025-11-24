@@ -15,7 +15,7 @@ const FUNCTION_EXPRESSION_TYPES = ['FunctionExpression', 'ArrowFunctionExpressio
  * 4. Return matching nodes for transformation
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of call expression nodes that can be unwrapped
  */
 export function replaceCallExpressionsWithUnwrappedIdentifierMatch(arb, candidateFilter = () => true) {
@@ -119,7 +119,7 @@ function isUnwrappableExpression(expr) {
  * - const b = () => btoa; b()('data') → btoa('data')
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 function replaceCallExpressionsWithUnwrappedIdentifier(arb, candidateFilter = () => true) {

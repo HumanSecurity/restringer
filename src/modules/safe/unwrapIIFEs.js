@@ -134,7 +134,7 @@ export function unwrapIIFEsTransform(arb, n) {
  * ```
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply to candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply to candidates
  * @return {Arborist} The Arborist instance for chaining
  */
 export default function unwrapIIFEs(arb, candidateFilter = () => true) {

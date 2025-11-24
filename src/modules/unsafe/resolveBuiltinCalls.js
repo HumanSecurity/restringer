@@ -16,7 +16,7 @@ const SKIP_BUILTIN_FUNCTIONS = [
  * Matches CallExpressions and MemberExpressions that reference builtin functions
  * with only literal arguments, and Identifiers that are builtin functions.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {ASTNode[]} Array of nodes that match the criteria
  */
 export function resolveBuiltinCallsMatch(arb, candidateFilter = () => true) {
@@ -96,7 +96,7 @@ export function resolveBuiltinCallsTransform(arb, n, sharedSb) {
  * Replaces builtin function calls with literal arguments with their computed values.
  * Uses safe implementations when available to avoid potential security issues.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveBuiltinCalls(arb, candidateFilter = () => true) {

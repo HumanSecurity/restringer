@@ -16,7 +16,7 @@ const RETURNABLE_TYPES = ['Literal', 'Identifier'];
  * 5. Return matching function declaration nodes
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of function declaration nodes that can be replaced
  */
 export function replaceFunctionShellsWithWrappedValueMatch(arb, candidateFilter = () => true) {
@@ -95,7 +95,7 @@ export function replaceFunctionShellsWithWrappedValueTransform(arb, node) {
  * - Improves readability by exposing actual values
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 export default function replaceFunctionShellsWithWrappedValue(arb, candidateFilter = () => true) {

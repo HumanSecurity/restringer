@@ -8,7 +8,7 @@ const VALID_OBJECT_TYPES = ['ArrayExpression', 'Literal'];
  * Matches expressions like '123'[0], 'hello'.length, [1,2,3][0] that access
  * literal properties of literal objects/arrays.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {ASTNode[]} Array of MemberExpression nodes ready for evaluation
  */
 export function resolveDefiniteMemberExpressionsMatch(arb, candidateFilter = () => true) {
@@ -75,7 +75,7 @@ export function resolveDefiniteMemberExpressionsTransform(arb, matches) {
  * Transforms expressions like '123'[0] → '1', 'hello'.length → 5, [1,2,3][0] → 1
  * Only processes safe expressions that won't change program semantics.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter function for candidates
+ * @param {Function} [candidateFilter] - Optional filter function for candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveDefiniteMemberExpressions(arb, candidateFilter = () => true) {

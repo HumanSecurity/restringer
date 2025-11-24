@@ -182,7 +182,7 @@ export function resolveProxyReferencesTransform(arb, match) {
  * - Ensures neither proxy nor target variables are modified after declaration
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST to transform
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveProxyReferences(arb, candidateFilter = () => true) {

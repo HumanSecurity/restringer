@@ -9,7 +9,7 @@ import {getDeclarationWithContext} from '../utils/getDeclarationWithContext.js';
  * Matches eval calls where the argument is an expression (function call, array access, etc.)
  * rather than a direct string literal.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter for candidates
+ * @param {Function} [candidateFilter] - Optional filter for candidates
  * @return {ASTNode[]} Array of eval CallExpression nodes ready for resolution
  */
 export function resolveEvalCallsOnNonLiteralsMatch(arb, candidateFilter = () => true) {
@@ -96,7 +96,7 @@ export function resolveEvalCallsOnNonLiteralsTransform(arb, matches) {
  * and replacing the eval calls with their resolved content. Handles context dependencies
  * and attempts to parse string results as JavaScript code.
  * @param {Arborist} arb - The Arborist instance
- * @param {Function} candidateFilter - Optional filter function for candidates
+ * @param {Function} [candidateFilter] - Optional filter function for candidates
  * @return {Arborist} The updated Arborist instance
  */
 export default function resolveEvalCallsOnNonLiterals(arb, candidateFilter = () => true) {

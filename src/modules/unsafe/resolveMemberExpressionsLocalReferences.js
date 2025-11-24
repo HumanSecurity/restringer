@@ -12,7 +12,7 @@ const VALID_PROPERTY_TYPES = ['Identifier', 'Literal'];
  * Only processes member expressions with literal properties or identifiers, excluding
  * assignment targets, call expression callees, function parameters, and modified references.
  * @param {Arborist} arb - Arborist instance
- * @param {Function} candidateFilter - Optional filter function for additional candidate filtering
+ * @param {Function} [candidateFilter] - Optional filter function for additional candidate filtering
  * @return {ASTNode[]} Array of member expression nodes that can be resolved
  */
 export function resolveMemberExpressionsLocalReferencesMatch(arb, candidateFilter = () => true) {
@@ -116,7 +116,7 @@ export function resolveMemberExpressionsLocalReferencesTransform(arb, matches) {
  * const a = {hello: 'world'};
  * const b = a['hello']; // <-- will be resolved to 'world'
  * @param {Arborist} arb - Arborist instance
- * @param {Function} candidateFilter - Optional filter function for additional candidate filtering
+ * @param {Function} [candidateFilter] - Optional filter function for additional candidate filtering
  * @return {Arborist} The modified Arborist instance
  */
 export default function resolveMemberExpressionsLocalReferences(arb, candidateFilter = () => true) {

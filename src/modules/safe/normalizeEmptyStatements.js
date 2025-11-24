@@ -4,12 +4,11 @@ const CONTROL_FLOW_STATEMENT_TYPES = ['ForStatement', 'ForInStatement', 'ForOfSt
 /**
  * Find all empty statements that can be safely removed.
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of empty statement nodes that can be safely removed
  */
 export function normalizeEmptyStatementsMatch(arb, candidateFilter = () => true) {
-	const relevantNodes = []
-		.concat(arb.ast[0].typeMap.EmptyStatement);
+	const relevantNodes = arb.ast[0].typeMap.EmptyStatement;
 		
 	const matchingNodes = [];
 	
@@ -56,7 +55,7 @@ export function normalizeEmptyStatementsTransform(arb, node) {
  *   - Control flow body empty statements: "for(;;);", "while(true);", "if(condition);"
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function normalizeEmptyStatements(arb, candidateFilter = () => true) {

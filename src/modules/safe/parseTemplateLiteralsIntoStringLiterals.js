@@ -3,11 +3,11 @@ import {createNewNode} from '../utils/createNewNode.js';
 /**
  * Find all template literals that contain only literal expressions and can be converted to string literals.
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of template literal nodes that can be converted to string literals
  */
 export function parseTemplateLiteralsIntoStringLiteralsMatch(arb, candidateFilter = () => true) {
-	const relevantNodes = [].concat(arb.ast[0].typeMap.TemplateLiteral);
+	const relevantNodes = arb.ast[0].typeMap.TemplateLiteral;
 	const matchingNodes = [];
 	
 	for (let i = 0; i < relevantNodes.length; i++) {
@@ -58,7 +58,7 @@ export function parseTemplateLiteralsIntoStringLiteralsTransform(arb, node) {
  * not variables or function calls which could change at runtime.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function parseTemplateLiteralsIntoStringLiterals(arb, candidateFilter = () => true) {

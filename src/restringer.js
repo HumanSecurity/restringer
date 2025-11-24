@@ -129,7 +129,7 @@ export class REstringer {
 	 * Determine obfuscation type and run the pre- and post- processors accordingly.
 	 * Run the deobfuscation methods in a loop until nothing more is changed.
 	 * Normalize script to make it more readable.
-	 * @param {boolean} clean (optional) Remove dead nodes after deobfuscation. Defaults to false.
+	 * @param {boolean} [clean] Remove dead nodes after deobfuscation. Defaults to false.
 	 * @return {boolean} true if the script was modified during deobfuscation; false otherwise.
 	 */
 	deobfuscate(clean = false) {

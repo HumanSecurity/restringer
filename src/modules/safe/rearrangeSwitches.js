@@ -10,7 +10,7 @@ const MAX_REPETITION = 50;
  * - Has deterministic flow through cases via assignments
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of matching switch statement nodes
  */
 export function rearrangeSwitchesMatch(arb, candidateFilter = () => true) {
@@ -123,7 +123,7 @@ export function rearrangeSwitchesTransform(arb, switchNode) {
  *   doThird();
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function rearrangeSwitches(arb, candidateFilter = () => true) {

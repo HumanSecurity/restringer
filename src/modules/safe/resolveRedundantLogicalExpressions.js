@@ -180,7 +180,7 @@ export function resolveRedundantLogicalExpressionsTransform(arb, n) {
  * - The logic outcome remains semantically equivalent for pure expressions
  * 
  * @param {Arborist} arb - The Arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply to candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply to candidates
  * @return {Arborist} The Arborist instance for chaining
  */
 export default function resolveRedundantLogicalExpressions(arb, candidateFilter = () => true) {

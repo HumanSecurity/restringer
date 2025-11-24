@@ -8,7 +8,7 @@ const LOGICAL_OPERATORS = ['&&', '||'];
  * that can be converted from short-circuit evaluation to explicit if statements.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {ASTNode[]} Array of expression statement nodes with logical expressions
  */
 export function replaceBooleanExpressionsWithIfMatch(arb, candidateFilter = () => true) {
@@ -95,7 +95,7 @@ export function replaceBooleanExpressionsWithIfTransform(arb, expressionStatemen
  * side only if left is falsy.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list. Defaults to true.
  * @return {Arborist}
  */
 export default function replaceBooleanExpressionsWithIf(arb, candidateFilter = () => true) {

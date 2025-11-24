@@ -71,7 +71,7 @@ function handleCalleeReplacement(evalNode, replacementNode) {
  * 4. Return matching nodes for transformation
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of eval call expression nodes that can be replaced
  */
 export function replaceEvalCallsWithLiteralContentMatch(arb, candidateFilter = () => true) {
@@ -159,7 +159,7 @@ export function replaceEvalCallsWithLiteralContentTransform(arb, node) {
  * - eval('Function')('code') → Function('code')
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 export default function replaceEvalCallsWithLiteralContent(arb, candidateFilter = () => true) {

@@ -32,7 +32,7 @@ function isObjectPropertyName(n) {
  * 6. Return matching identifier nodes
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {ASTNode[]} Array of identifier nodes that can have their references replaced
  */
 export function replaceIdentifierWithFixedAssignedValueMatch(arb, candidateFilter = () => true) {
@@ -109,7 +109,7 @@ export function replaceIdentifierWithFixedAssignedValueTransform(arb, n) {
  * - Reduces memory usage by eliminating variable references
  * 
  * @param {Arborist} arb - The arborist instance containing the AST
- * @param {Function} candidateFilter - Optional filter to apply on candidates
+ * @param {Function} [candidateFilter] - Optional filter to apply on candidates
  * @return {Arborist} The modified arborist instance
  */
 export default function replaceIdentifierWithFixedAssignedValue(arb, candidateFilter = () => true) {

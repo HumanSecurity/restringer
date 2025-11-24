@@ -12,7 +12,7 @@ const RELEVANT_PARENTS = [
  * indicating they are declared but never used anywhere in the code.
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list
  * @return {ASTNode[]} Array of dead identifier nodes
  */
 function removeDeadNodesMatch(arb, candidateFilter = () => true) {
@@ -79,7 +79,7 @@ function removeDeadNodesTransform(arb, identifierNode) {
  * - Assignment expressions: `unused = value;` (if unused is unreferenced)
  * 
  * @param {Arborist} arb
- * @param {Function} candidateFilter (optional) a filter to apply on the candidates list
+ * @param {Function} [candidateFilter] a filter to apply on the candidates list
  * @return {Arborist}
  */
 function removeDeadNodes(arb, candidateFilter = () => true) {
