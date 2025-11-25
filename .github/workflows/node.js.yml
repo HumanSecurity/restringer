@@ -26,5 +26,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3 g++ build-essential
       - run: npm install
       - run: npm run test
