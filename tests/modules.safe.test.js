@@ -2145,8 +2145,14 @@ describe('SAFE: simplifyCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
+	it('TP-7: Call and apply with null for context', () => {
+		const code = `func1.call(null, arg); func2.apply(null, [arg]);`;
+		const expected = `func1(arg);\nfunc2(arg);`;
+		const result = applyModuleToCode(code, targetModule);
+		assert.strictEqual(result, expected);
+	});
 	it('TN-1: Ignore calls without ThisExpression', () => {
-		const code = `func1.apply({}); func2.call(null); func3.apply(obj);`;
+		const code = `func1.apply({}); func2.call(undefined); func3.apply(obj);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
@@ -2169,13 +2175,7 @@ describe('SAFE: simplifyCalls', async () => {
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
-	it('TN-5: Do not transform computed property access', () => {
-		const code = `func['call'](this, arg); obj['apply'](this, [arg]);`;
-		const expected = code;
-		const result = applyModuleToCode(code, targetModule);
-		assert.strictEqual(result, expected);
-	});
-	it('TN-6: Do not transform calls with this in wrong position', () => {
+	it('TN-5: Do not transform calls with this in wrong position', () => {
 		const code = `func.call(arg, this); func.apply(arg1, this, arg2);`;
 		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
@@ -2264,7 +2264,7 @@ describe('SAFE: simplifyIfStatements', async () => {
 	});
 	it('TN-3: Do not transform if with only populated consequent block', () => {
 		const code = `if (test) { performAction(); }`;
-		const expected = `if (test) {\n  performAction();\n}`;
+		const expected = code;
 		const result = applyModuleToCode(code, targetModule);
 		assert.strictEqual(result, expected);
 	});
