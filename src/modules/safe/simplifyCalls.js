@@ -1,18 +1,5 @@
 const CALL_APPLY_METHODS = ['apply', 'call'];
-
-/**
- * Gets the property name from a non-computed member expression.
- * 
- * @param {ASTNode} memberExpr - The MemberExpression node
- * @return {string|null} The property name or null if computed/not extractable
- */
-function getPropertyName(memberExpr) {
-	// Only handle non-computed property access (obj.prop, not obj['prop'])
-	if (memberExpr.computed) {
-		return null;
-	}
-	return memberExpr.property?.name || null;
-}
+const ALLOWED_CONTEXT_VARIABLE_TYPES = ['ThisExpression', 'Literal'];
 
 /**
  * Extracts arguments for the simplified call based on method type.
@@ -53,13 +40,14 @@ export function simplifyCallsMatch(arb, candidateFilter = () => true) {
 		const n = relevantNodes[i];
 		
 		// Must be a call/apply on a member expression with 'this' as first argument
-		if (n.arguments?.[0]?.type !== 'ThisExpression' ||
+		if (!ALLOWED_CONTEXT_VARIABLE_TYPES.includes(n.arguments?.[0]?.type) ||
+			(n.arguments?.[0]?.type === 'Literal' && n.arguments?.[0]?.value !== null) ||
 			n.callee.type !== 'MemberExpression' ||
 			!candidateFilter(n)) {
 			continue;
 		}
 		
-		const propertyName = getPropertyName(n.callee);
+		const propertyName = n.callee.property?.name || n.callee.property?.value;
 		
 		// Must be 'apply' or 'call' method
 		if (!CALL_APPLY_METHODS.includes(propertyName)) {
@@ -68,7 +56,7 @@ export function simplifyCallsMatch(arb, candidateFilter = () => true) {
 		
 		// Exclude Function constructor calls and function expressions
 		const objectName = n.callee.object?.name || n.callee?.value;
-		if (objectName === 'Function' || /function/i.test(n.callee.object.type)) {
+		if (objectName === 'Function' || n.callee.object.type.includes('unction')) {
 			continue;
 		}
 		
@@ -91,7 +79,7 @@ export function simplifyCallsMatch(arb, candidateFilter = () => true) {
  * @return {Arborist} The Arborist instance for chaining
  */
 export function simplifyCallsTransform(arb, n) {
-	const propertyName = getPropertyName(n.callee);
+	const propertyName = n.callee.property?.name || n.callee.property?.value;
 	const simplifiedArgs = extractSimplifiedArguments(n, propertyName);
 	
 	const simplifiedCall = {
