@@ -42,7 +42,7 @@ Thank you for your interest in contributing to REstringer! This guide covers eve
 
 ### Prerequisites
 
-- **Node.js v18+** (v22+ recommended)
+- **Node.js v20+** (v22+ recommended)
 - **npm** (latest stable version)
 - **Git** for version control
 
