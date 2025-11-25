@@ -208,11 +208,11 @@ function _yk(a) {
     } else {
       if (('' + c / c).length !== 1 || c % 20 === 0) {
         (function () {
-          undefined;
+          debugge_;
         }.call('action'));
       } else {
         (function () {
-          undefined;
+          debugge_;
         }.apply('stateObject'));
       }
     }
