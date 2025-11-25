@@ -76,12 +76,12 @@ export function simplifyIfStatementsMatch(arb, candidateFilter = () => true) {
  * @return {Arborist} The Arborist instance for chaining
  */
 export function simplifyIfStatementsTransform(arb, n) {
-	const consequentEmpty = isEmpty(n.consequent);
-	const alternateEmpty = isEmpty(n.alternate);
+	const isConsequentEmpty = isEmpty(n.consequent);
+	const isAlternateEmpty = isEmpty(n.alternate);
 	let replacementNode;
 	
-	if (consequentEmpty) {
-		if (alternateEmpty) {
+	if (isConsequentEmpty) {
+		if (isAlternateEmpty) {
 			// Both branches empty - convert to expression statement
 			replacementNode = {
 				type: 'ExpressionStatement',
@@ -96,7 +96,7 @@ export function simplifyIfStatementsTransform(arb, n) {
 				alternate: null,
 			};
 		}
-	} else if (alternateEmpty) {
+	} else if (isAlternateEmpty) {
 		// Populated consequent with empty alternate - remove alternate
 		replacementNode = {
 			...n,
