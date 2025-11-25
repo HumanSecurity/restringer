@@ -96,7 +96,7 @@ export function simplifyIfStatementsTransform(arb, n) {
 				alternate: null,
 			};
 		}
-	} else if (isAlternateEmpty) {
+	} else if (isAlternateEmpty && n.alternate !== null) {
 		// Populated consequent with empty alternate - remove alternate
 		replacementNode = {
 			...n,
