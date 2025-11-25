@@ -209,6 +209,9 @@ var lo;
       return j._.join('').split('%').join('').split('#1').join('%').split('#0').join('#').split('');
     }
     function b() {
+      if (e()) {
+        return;
+      }
       if (!('navigator' in this)) {
         this.navigator = {};
       }
@@ -498,8 +501,8 @@ var lo;
       l();
       m();
       lo = setInterval(() => {
-        const c = window.outerWidth - window.innerWidth > 160;
-        const b = window.outerHeight - window.innerHeight > 160;
+        const c = window.outerWidth - window.innerWidth > th;
+        const b = window.outerHeight - window.innerHeight > th;
         if (!(b && c) && (window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized || c || b)) {
           bH();
           clearInterval(lo);
