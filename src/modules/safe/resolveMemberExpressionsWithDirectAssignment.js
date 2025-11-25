@@ -96,9 +96,13 @@ function findReplaceablePropertyReferences(objectDeclNode, propertyName, assignm
 			continue;
 		}
 		
-		// Skip if this is a modifying reference (assignment or update)
+		// Don't replace any reference if any of them are modifying the property
 		if (isModifyingReference(memberExpr)) {
-			return []; // If any modification found, no references can be replaced
+			return [];
+		}
+		
+		if (ref.scope !== assignmentMemberExpr.scope) {
+			return [];
 		}
 		
 		replaceableRefs.push(ref);
@@ -166,7 +170,7 @@ export function resolveMemberExpressionsWithDirectAssignmentMatch(arb, candidate
 		);
 		
 		// Only add as candidate if there are references to replace
-		if (replaceableRefs.length > 0) {
+		if (replaceableRefs.length) {
 			matches.push({
 				memberExpr: n,
 				propertyName: propertyName,
