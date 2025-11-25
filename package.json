@@ -19,10 +19,10 @@
     "test": "tests"
   },
   "dependencies": {
-    "commander": "^14.0.0",
+    "commander": "^14.0.2",
     "flast": "2.2.5",
-    "isolated-vm": "^5.0.3",
-    "obfuscation-detector": "^2.0.5"
+    "isolated-vm": "^6.0.2",
+    "obfuscation-detector": "^2.0.6"
   },
   "scripts": {
     "test": "node --test --trace-warnings --no-node-snapshot",
@@ -49,10 +49,10 @@
   },
   "homepage": "https://github.com/HumanSecurity/restringer#readme",
   "devDependencies": {
-    "@babel/eslint-parser": "^7.25.9",
-    "@babel/plugin-syntax-import-assertions": "^7.26.0",
-    "eslint": "^9.16.0",
-    "globals": "^15.13.0",
+    "@babel/eslint-parser": "^7.28.5",
+    "@babel/plugin-syntax-import-assertions": "^7.27.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
     "husky": "^9.1.7"
   }
 }
