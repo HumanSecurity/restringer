@@ -48,7 +48,7 @@ function isInConditionalContext(ref) {
  * @return {Object|null} The assignment reference or null
  */
 function getSingleAssignmentReference(n) {
-	if (!n.references) return null;
+	if (!n.references?.length) return null;
 	
 	const assignmentRefs = n.references.filter(r =>
 		r.parentNode.type === 'AssignmentExpression' &&
@@ -88,7 +88,7 @@ export function replaceIdentifierWithFixedValueNotAssignedAtDeclarationMatch(arb
 		if (candidateFilter(n) &&
 			n.parentNode?.type === 'VariableDeclarator' &&
 			!n.parentNode.init && // Variable declared without initial value
-			n.references) {
+			n.references.length) {
 			
 			// Check for exactly one assignment to a literal value
 			const assignmentRef = getSingleAssignmentReference(n);
@@ -138,9 +138,21 @@ export function replaceIdentifierWithFixedValueNotAssignedAtDeclarationTransform
 			if (ref.parentNode.type === 'CallExpression' && ref.parentKey === 'callee') {
 				continue;
 			}
-			
-			// Replace the reference with the literal value
-			arb.markNode(ref, valueNode);
+
+			// Check if the reference is in the same scope as the assignment
+			let scopesMatches = true;
+			for (let j = 0; j < assignmentRef.lineage.length; j++) {
+				if (assignmentRef.lineage[j] !== ref.lineage[j]) {
+					scopesMatches = false;
+					break;
+				}
+			}
+
+			if (scopesMatches) {
+				// Replace the reference with the literal value
+				arb.markNode(ref, valueNode);
+			}
+
 		}
 	}
 	
